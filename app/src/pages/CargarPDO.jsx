@@ -49,6 +49,35 @@ function parsePdoCsv(text) {
   return { rows, invalid };
 }
 
+/**
+ * Interpreta la línea "SOBREVUELOS: ..." tal cual del PDO diario y extrae los
+ * sobrevuelos de sector. Cada tramo del texto se separa por "/". Se toma como
+ * hora la PRIMERA hora del segmento (la de inicio) y como tramo el número que
+ * sigue a "SECTOR". Los segmentos sin "SECTOR" (disposición, servicio colegio,
+ * etc.) se ignoran. Devuelve { items: [{tramo_n, hora}], skipped }.
+ *
+ * Ej.: "SOBREVUELOS: 07:15 A 08:00 DISPOSICION J.O RPA / SERVICIO COLEGIO /
+ *       09:10 A 10:00 HRS. SECTOR 68 / 10:30 A 11:00 HRS. SECTOR. 15"
+ *   -> [{tramo_n:68, hora:'09:10'}, {tramo_n:15, hora:'10:30'}]
+ */
+function parseSobrevuelos(text) {
+  const chunks = String(text).split('/');
+  const items = [];
+  let skipped = 0;
+  for (const chunk of chunks) {
+    const sectorMatch = chunk.match(/SECTOR\.?\s*(\d{1,3})/i);
+    if (!sectorMatch) continue; // no es un sobrevuelo de sector
+    const timeMatch = chunk.match(/(\d{1,2}):(\d{2})/); // primera hora = inicio
+    if (!timeMatch) {
+      skipped++;
+      continue;
+    }
+    const hora = `${String(Number(timeMatch[1])).padStart(2, '0')}:${timeMatch[2]}`;
+    items.push({ tramo_n: Number(sectorMatch[1]), hora });
+  }
+  return { items, skipped };
+}
+
 export default function CargarPDO() {
   const navigate = useNavigate();
   const { operadores, tramosByN, operadoresByHalcon } = useCatalog();
@@ -56,6 +85,7 @@ export default function CargarPDO() {
 
   const [fecha, setFecha] = useState(fechaOperativaHoy());
   const [draft, setDraft] = useState(blankDraft());
+  const [pega, setPega] = useState({ turno: 'A', halconN: '', text: '' });
   const [pending, setPending] = useState([]);
   const [existing, setExisting] = useState([]);
   const [loadingExisting, setLoadingExisting] = useState(true);
@@ -104,6 +134,34 @@ export default function CargarPDO() {
 
   function removePending(idx) {
     setPending((p) => p.filter((_, i) => i !== idx));
+  }
+
+  function agregarSobrevuelos() {
+    if (!pega.halconN) {
+      setError('Selecciona el funcionario (Halcón) antes de interpretar los sobrevuelos.');
+      return;
+    }
+    const { items } = parseSobrevuelos(pega.text);
+    if (items.length === 0) {
+      setError('No se detectaron sobrevuelos con "SECTOR N" en el texto. Revisa que hayas pegado la línea completa de SOBREVUELOS.');
+      return;
+    }
+    const nuevas = [];
+    const inexistentes = [];
+    for (const it of items) {
+      if (!tramosByN.has(it.tramo_n)) {
+        inexistentes.push(it.tramo_n);
+        continue;
+      }
+      nuevas.push({ fecha, turno: pega.turno, halcon_n: pega.halconN, tramo_n: it.tramo_n, hora: it.hora });
+    }
+    setPending((p) => [...p, ...nuevas]);
+    setPega((s) => ({ ...s, text: '' }));
+    if (inexistentes.length) {
+      setError(`Se agregaron ${nuevas.length} sobrevuelos. Se omitieron sectores que no existen entre los 69 tramos: ${inexistentes.join(', ')}.`);
+    } else {
+      setError('');
+    }
   }
 
   function handleCsvFile(e) {
@@ -161,6 +219,40 @@ export default function CargarPDO() {
         <div>
           <label className="field-label">Fecha operativa del PDO</label>
           <input type="date" className="field-input" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+        </div>
+
+        <div className="card" style={{ padding: 15 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--texto-titulo)', marginBottom: 3 }}>Pegar sobrevuelos del PDO</div>
+          <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', marginBottom: 10, lineHeight: 1.45 }}>
+            Elige turno y funcionario, y pega la línea <strong>SOBREVUELOS: …</strong> tal cual del PDO. La app detecta cada “SECTOR N” con su hora de inicio e ignora lo demás (disposición, servicio colegio…).
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+            <select className="field-select" style={{ height: 44 }} value={pega.turno} onChange={(e) => setPega((s) => ({ ...s, turno: e.target.value }))}>
+              {TURNO_OPTS.map((t) => (
+                <option key={t} value={t}>
+                  Turno {t} · {TURNOS[t].label}
+                </option>
+              ))}
+            </select>
+            <select className="field-select" style={{ height: 44 }} value={pega.halconN} onChange={(e) => setPega((s) => ({ ...s, halconN: e.target.value }))}>
+              <option value="">Halcón…</option>
+              {operadoresOperativos.map((o) => (
+                <option key={o.halcon_n} value={o.halcon_n}>
+                  Halcón {o.halcon_n} · {o.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+          <textarea
+            className="field-textarea"
+            style={{ minHeight: 84, marginBottom: 8 }}
+            value={pega.text}
+            onChange={(e) => setPega((s) => ({ ...s, text: e.target.value }))}
+            placeholder="SOBREVUELOS: 09:10 A 10:00 HRS. SECTOR 68 / 10:30 A 11:00 HRS. SECTOR 15 / 11:30 A 12:00 HRS. SECTOR 31 …"
+          />
+          <button onClick={agregarSobrevuelos} className="btn btn-primary" style={{ width: '100%', height: 44 }}>
+            Interpretar y agregar
+          </button>
         </div>
 
         <div className="card" style={{ padding: 15 }}>
