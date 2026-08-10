@@ -11,20 +11,42 @@ function blankDraft() {
   return { turno: 'A', halconN: '', tramoN: '', hora: '' };
 }
 
-/** Parsea el CSV de datos/PDO_Dia_ejemplo.csv: Fecha,Turno,HalconN,TramoN,Hora */
+/**
+ * Parsea el CSV de datos/PDO_Dia_ejemplo.csv: Fecha,Turno,HalconN,TramoN,Hora
+ * Valida cada fila y descarta las inválidas. Si el archivo es binario (p.ej.
+ * subieron un .xlsx en vez de un .csv), lanza 'BINARIO'.
+ * Devuelve { rows, invalid }.
+ */
 function parsePdoCsv(text) {
+  // Bytes de control (excepto tab/CR/LF) => no es texto CSV, es un binario.
+  if (/[\x00-\x08\x0E-\x1F]/.test(text.slice(0, 4000))) {
+    throw new Error('BINARIO');
+  }
   const lines = text.trim().split(/\r?\n/);
   const rows = [];
+  let invalid = 0;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
     const cols = line.split(',').map((c) => c.trim().replace(/^"|"$/g, ''));
-    if (cols[0].toLowerCase() === 'fecha') continue; // encabezado
+    if ((cols[0] || '').toLowerCase() === 'fecha') continue; // encabezado
     const [fecha, turno, halconN, tramoN, hora] = cols;
-    if (!fecha || !turno || !halconN || !tramoN || !hora) continue;
-    rows.push({ fecha, turno, halcon_n: halconN, tramo_n: Number(tramoN), hora });
+    const tramoNum = Number(tramoN);
+    const valida =
+      /^\d{4}-\d{2}-\d{2}$/.test(fecha || '') &&
+      ['A', 'B', 'N'].includes((turno || '').toUpperCase()) &&
+      !!halconN &&
+      Number.isInteger(tramoNum) &&
+      tramoNum >= 1 &&
+      tramoNum <= 69 &&
+      /^\d{1,2}:\d{2}$/.test(hora || '');
+    if (!valida) {
+      invalid++;
+      continue;
+    }
+    rows.push({ fecha, turno: turno.toUpperCase(), halcon_n: halconN, tramo_n: tramoNum, hora });
   }
-  return rows;
+  return { rows, invalid };
 }
 
 export default function CargarPDO() {
@@ -90,11 +112,19 @@ export default function CargarPDO() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const rows = parsePdoCsv(String(reader.result));
+        const { rows, invalid } = parsePdoCsv(String(reader.result));
+        if (rows.length === 0) {
+          setError('No se encontraron filas válidas. El archivo debe ser un CSV de texto con columnas Fecha,Turno,HalconN,TramoN,Hora (no un Excel .xlsx).');
+          return;
+        }
         setPending((p) => [...p, ...rows]);
-        setError('');
-      } catch {
-        setError('No se pudo leer el archivo CSV. Verifica el formato (Fecha,Turno,HalconN,TramoN,Hora).');
+        setError(invalid > 0 ? `Se importaron ${rows.length} filas; se omitieron ${invalid} con formato inválido.` : '');
+      } catch (err) {
+        if (err.message === 'BINARIO') {
+          setError('Ese archivo no es un CSV de texto (parece un Excel .xlsx u otro binario). Guárdalo como CSV, o carga las filas manualmente con "+ Agregar fila".');
+        } else {
+          setError('No se pudo leer el archivo CSV. Verifica el formato (Fecha,Turno,HalconN,TramoN,Hora).');
+        }
       }
     };
     reader.readAsText(file);
