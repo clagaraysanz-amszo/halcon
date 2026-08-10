@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0}
+  a{color:#EE6B1E;text-decoration:none}
+  a:hover{color:#D75E14}
+  input,select,textarea,button{font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+  ::-webkit-scrollbar{width:0;height:0}
+  .hz::-webkit-scrollbar{display:none}
+  select{-webkit-appearance:none;appearance:none}
+  @keyframes hkpop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+  @keyframes hkring{to{stroke-dashoffset:var(--dash)}}
+  @keyframes hkbar{from{width:0}}
+  @keyframes hkcheck{0%{transform:scale(0);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:radial-gradient(120% 90% at 50% 0%,#e9edf3 0%,#dfe4ec 100%);display:flex;align-items:center;justify-content:center;padding:28px 16px;font-family:'Segoe UI',system-ui,-apple-system,sans-serif">
+
+<div style="width:400px;max-width:100%;height:822px;background:#0F1A30;border-radius:40px;padding:11px;box-shadow:0 40px 90px rgba(15,26,48,.38),0 0 0 2px rgba(255,255,255,.04);position:relative">
+  <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:118px;height:26px;background:#0F1A30;border-radius:0 0 16px 16px;z-index:40"></div>
+  <div style="width:100%;height:100%;background:#EEF1F5;border-radius:30px;overflow:hidden;display:flex;flex-direction:column;position:relative">
+
+    <!-- status bar -->
+    <div style="height:36px;flex:none;background:{{ statusBg }};display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 22px;color:#fff;z-index:30">
+      <span style="font-weight:600;font-size:13px;letter-spacing:.3px">{{ clock }}</span>
+      <span style="display:flex;align-items:center;gap:7px">
+        <span style="display:flex;align-items:flex-end;gap:1.5px;height:11px">
+          <i style="width:2.5px;height:4px;background:#fff;border-radius:1px;opacity:.55"></i>
+          <i style="width:2.5px;height:6px;background:#fff;border-radius:1px;opacity:.75"></i>
+          <i style="width:2.5px;height:8px;background:#fff;border-radius:1px"></i>
+          <i style="width:2.5px;height:11px;background:#fff;border-radius:1px"></i>
+        </span>
+        <svg width="15" height="12" viewBox="0 0 15 12" fill="none"><path d="M7.5 2C4.8 2 2.5 3 1 4.6l6.5 6.4L14 4.6C12.5 3 10.2 2 7.5 2z" fill="#fff"/></svg>
+        <span style="display:inline-flex;align-items:center;gap:2px"><i style="width:18px;height:10px;border:1.5px solid #fff;border-radius:3px;position:relative;display:inline-block"><b style="position:absolute;left:1px;top:1px;bottom:1px;width:11px;background:#fff;border-radius:1px"></b></i><i style="width:1.5px;height:4px;background:#fff;border-radius:0 1px 1px 0"></i></span>
+      </span>
+    </div>
+
+    <div style="flex:1;min-height:0;overflow-y:auto;position:relative" class="hz">
+
+    <!-- ================= LOGIN ================= -->
+    <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+      <div style="min-height:100%;background:linear-gradient(178deg,#16233F 0%,#1C2E52 55%,#16233F 100%);display:flex;flex-direction:column;padding:44px 30px 30px">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;animation:hkpop .5s ease both">
+          <div style="width:118px;height:118px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 6px rgba(238,107,30,.18),0 0 0 1px rgba(238,107,30,.35),0 18px 44px rgba(0,0,0,.4)">
+            <img src="assets/logo.png" alt="Lo Barnechea Seguridad" style="width:96px;height:96px;object-fit:cover;object-position:left center;border-radius:50%"/>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:12px;letter-spacing:3.5px;color:#EE6B1E;font-weight:700;margin-bottom:8px">SEGURIDAD · LO BARNECHEA</div>
+            <div style="font-size:25px;font-weight:700;color:#fff;line-height:1.18;letter-spacing:.2px">Sistema de Gestión<br>Operativa de Drones</div>
+            <div style="font-size:34px;font-weight:800;color:#EE6B1E;letter-spacing:.5px;margin-top:2px">HALCÓN</div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border-radius:22px;padding:22px 20px 24px;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:hkpop .6s ease both">
+          <label style="display:block;font-size:12.5px;font-weight:600;color:#6B7480;margin:0 0 7px 2px">Usuario operativo</label>
+          <div style="position:relative;margin-bottom:16px">
+            <select value="{{ halcon }}" onChange="{{ onHalcon }}" style="width:100%;height:52px;border:1.5px solid #D8DEE7;border-radius:13px;padding:0 44px 0 16px;font-size:16px;font-weight:600;color:#1B2431;background:#F7F9FC;cursor:pointer">
+              <option value="">Seleccionar…</option>
+              <option value="1">Halcón 1</option><option value="2">Halcón 2</option>
+              <option value="3">Halcón 3</option><option value="4">Halcón 4</option>
+              <option value="5">Halcón 5</option><option value="6">Halcón 6</option>
+              <option value="7">Halcón 7</option>
+            </select>
+            <span style="position:absolute;right:16px;top:20px;pointer-events:none;color:#8B93A1;font-size:12px">▼</span>
+          </div>
+          <sc-if value="{{ halconName }}">
+            <div style="margin:-8px 2px 14px;font-size:12.5px;color:#1E874B;font-weight:600;display:flex;align-items:center;gap:6px"><i style="width:7px;height:7px;border-radius:50%;background:#1E874B;display:inline-block"></i>{{ halconName }} · {{ halconCargo }}</div>
+          </sc-if>
+          <label style="display:block;font-size:12.5px;font-weight:600;color:#6B7480;margin:0 0 7px 2px">Contraseña</label>
+          <input type="password" value="{{ pass }}" onChange="{{ onPass }}" placeholder="••••••••" style="width:100%;height:52px;border:1.5px solid #D8DEE7;border-radius:13px;padding:0 16px;font-size:16px;color:#1B2431;background:#F7F9FC;margin-bottom:20px"/>
+          <button onClick="{{ login }}" style="width:100%;height:54px;border:none;border-radius:14px;background:{{ loginBtnBg }};color:#fff;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(238,107,30,.32);display:flex;align-items:center;justify-content:center;gap:10px" style-hover="filter:brightness(1.05)">Ingresar<span style="font-size:18px">→</span></button>
+          <button onClick="{{ goSupervisor }}" style="width:100%;height:44px;margin-top:12px;border:none;background:transparent;color:#16233F;font-size:13.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px"><span style="opacity:.5">◫</span>Entrar como Supervisor</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;color:rgba(255,255,255,.45);font-size:11px">
+          <img src="assets/logo.png" alt="amszo" style="height:22px;width:64px;object-fit:cover;object-position:right center;opacity:.75;filter:brightness(0) invert(1)"/>
+          <span style="opacity:.7">·</span><span>Bitácora de Vuelo · v1.0</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ================= HOME ================= -->
+    <sc-if value="{{ isHome }}">
+      <div style="min-height:100%">
+        <div style="background:linear-gradient(160deg,#16233F,#1E3057);padding:20px 20px 26px;color:#fff;border-radius:0 0 26px 26px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:11px">
+              <div style="width:44px;height:44px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px rgba(238,107,30,.35)"><img src="assets/logo.png" style="width:38px;height:38px;object-fit:cover;object-position:left center;border-radius:50%"/></div>
+              <div><div style="font-size:11px;color:#EE6B1E;font-weight:700;letter-spacing:1.5px">HALCÓN {{ userNum }}</div><div style="font-size:17px;font-weight:700;line-height:1.15">{{ userName }}</div></div>
+            </div>
+            <div style="width:11px;height:11px;border-radius:50%;background:#3FD07A;box-shadow:0 0 0 4px rgba(63,208,122,.2)"></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:20px">
+            <div style="flex:1;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.11);border-radius:14px;padding:12px 13px"><div style="font-size:11px;color:rgba(255,255,255,.6);font-weight:600">Fecha</div><div style="font-size:15px;font-weight:700;margin-top:3px">{{ dateShort }}</div></div>
+            <div style="flex:1;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.11);border-radius:14px;padding:12px 13px"><div style="font-size:11px;color:rgba(255,255,255,.6);font-weight:600">Turno {{ turno }} · {{ turnoLabel }}</div><div style="font-size:15px;font-weight:700;margin-top:3px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:{{ turnoDot }}"></span>{{ turnoHoras }}</div></div>
+          </div>
+        </div>
+
+        <div style="padding:18px 18px 22px">
+          <div style="display:flex;gap:12px;margin-bottom:18px">
+            <div style="flex:1;background:#fff;border:1px solid #E4E8EF;border-radius:16px;padding:16px;box-shadow:0 2px 8px rgba(22,35,63,.05)">
+              <div style="font-size:34px;font-weight:800;color:#16233F;line-height:1">{{ vuelosHoy }}</div>
+              <div style="font-size:12px;color:#6B7480;font-weight:600;margin-top:4px">Vuelos hoy</div>
+            </div>
+            <div style="flex:1;background:#fff;border:1px solid #E4E8EF;border-radius:16px;padding:16px;box-shadow:0 2px 8px rgba(22,35,63,.05)">
+              <div style="font-size:34px;font-weight:800;color:#EE6B1E;line-height:1">{{ realizadosCount }}</div>
+              <div style="font-size:12px;color:#6B7480;font-weight:600;margin-top:4px">Tramos realizados hoy</div>
+            </div>
+          </div>
+
+          <sc-if value="{{ diaLibre }}">
+            <div style="background:#fff;border:1px solid #E4E8EF;border-radius:16px;padding:18px;margin-bottom:14px;display:flex;align-items:center;gap:13px">
+              <div style="width:44px;height:44px;border-radius:13px;background:#EEF2F8;display:flex;align-items:center;justify-content:center;font-size:20px">🌤</div>
+              <div style="flex:1"><div style="font-size:14.5px;font-weight:700;color:#16233F">Día libre</div><div style="font-size:12.5px;color:#6B7480;margin-top:2px">No figuras en el PDO de hoy. Sin vuelos asignados.</div></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ hasTurno }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ goMisVuelos }}" style="width:100%;border:1.5px solid #CFE0F0;border-radius:18px;background:linear-gradient(135deg,#F4F8FC,#EAF1FA);padding:16px 18px;cursor:pointer;margin-bottom:14px;text-align:left" style-hover="border-color:#2C6FB5">
+              <div style="display:flex;align-items:center;gap:11px">
+                <div style="width:44px;height:44px;border-radius:13px;background:#16233F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px">📋</div>
+                <div style="flex:1"><div style="font-size:15px;font-weight:700;color:#16233F">PDO del día · Turno {{ turno }}</div><div style="font-size:12px;color:#6B7480;margin-top:1px">{{ pdoDone }}/{{ pdoTotal }} sobrevuelos realizados</div></div>
+                <span style="font-size:11px;font-weight:800;color:#fff;background:#EE6B1E;padding:5px 10px;border-radius:20px">{{ pdoPend }} pend.</span>
+              </div>
+              <div style="margin-top:12px;padding:10px 12px;background:#fff;border:1px solid #DDE6F0;border-radius:12px;display:flex;align-items:center;gap:10px">
+                <span style="font-size:11px;font-weight:800;color:#16233F;background:#EEF2F8;padding:5px 9px;border-radius:8px">{{ nextHora }}</span>
+                <span style="flex:1;font-size:12.5px;color:#16233F;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Próximo: {{ nextTitle }}</span>
+                <span style="color:#2C6FB5;font-size:16px">›</span>
+              </div>
+            </button>
+          </sc-if>
+
+          <button onClick="{{ goTramos }}" style="width:100%;border:none;border-radius:18px;background:linear-gradient(135deg,#F07D2E,#EE6B1E);color:#fff;padding:22px;cursor:pointer;box-shadow:0 10px 24px rgba(238,107,30,.32);display:flex;align-items:center;gap:16px;text-align:left" style-hover="filter:brightness(1.04)">
+            <div style="width:52px;height:52px;border-radius:15px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:26px">◎</div>
+            <div style="flex:1"><div style="font-size:19px;font-weight:700">Realizar Tramo</div><div style="font-size:13px;color:rgba(255,255,255,.85);margin-top:2px">Iniciar registro de vuelo</div></div>
+            <span style="font-size:22px">→</span>
+          </button>
+
+          <button onClick="{{ goHistorial }}" style="width:100%;margin-top:14px;border:1.5px solid #D3DAE4;border-radius:16px;background:#fff;padding:16px;cursor:pointer;display:flex;align-items:center;gap:13px;text-align:left" style-hover="border-color:#16233F">
+            <div style="width:44px;height:44px;border-radius:12px;background:#EEF2F8;display:flex;align-items:center;justify-content:center;font-size:20px">🕑</div>
+            <div style="flex:1"><div style="font-size:15px;font-weight:700;color:#16233F">Historial del Día</div><div style="font-size:12.5px;color:#6B7480;margin-top:1px">Tus vuelos registrados hoy</div></div>
+            <span style="color:#B8C0CC;font-size:18px">›</span>
+          </button>
+
+          <button onClick="{{ logout }}" style="width:100%;margin-top:20px;border:none;background:transparent;color:#B03A2E;font-size:14px;font-weight:600;cursor:pointer;padding:8px">Cerrar Sesión</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ================= TRAMOS ================= -->
+    <sc-if value="{{ isTramos }}">
+      <div style="min-height:100%;display:flex;flex-direction:column">
+        <div style="background:#16233F;padding:14px 16px 16px;color:#fff;position:sticky;top:0;z-index:10">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+            <button onClick="{{ goHome }}" style="width:38px;height:38px;border-radius:11px;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:20px;cursor:pointer">‹</button>
+            <div style="flex:1"><div style="font-size:17px;font-weight:700">Selección del Tramo</div><div style="font-size:12px;color:rgba(255,255,255,.6)">Hoy: {{ realizadosCount }} realizados · {{ pendientesCount }} del PDO pendientes</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.13);border-radius:12px;padding:0 12px;height:44px">
+            <span style="opacity:.7">🔍</span>
+            <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="Buscar por nombre o número…" style="flex:1;border:none;background:transparent;color:#fff;font-size:14.5px;outline:none"/>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px;overflow-x:auto" class="hz">
+            <button onClick="{{ setFilterAll }}" style="flex:none;border:none;border-radius:20px;padding:8px 15px;font-size:12.5px;font-weight:700;cursor:pointer;background:{{ chipAllBg }};color:{{ chipAllFg }}">Todos ({{ totalTramos }})</button>
+            <button onClick="{{ setFilterPend }}" style="flex:none;border:none;border-radius:20px;padding:8px 15px;font-size:12.5px;font-weight:700;cursor:pointer;background:{{ chipPendBg }};color:{{ chipPendFg }}">PDO pendientes ({{ pendientesCount }})</button>
+            <button onClick="{{ setFilterDone }}" style="flex:none;border:none;border-radius:20px;padding:8px 15px;font-size:12.5px;font-weight:700;cursor:pointer;background:{{ chipDoneBg }};color:{{ chipDoneFg }}">Realizados hoy ({{ realizadosCount }})</button>
+            <button onClick="{{ toggleMap }}" style="flex:none;border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:8px 15px;font-size:12.5px;font-weight:700;cursor:pointer;background:transparent;color:#fff">🗺 Mapa</button>
+          </div>
+        </div>
+
+        <sc-if value="{{ showMapNote }}">
+          <div style="margin:12px 14px 0;background:#FBF0DC;border:1px solid #F0DBB0;border-radius:12px;padding:11px 14px;font-size:12.5px;color:#8A5A0A;font-weight:600">🗺 Vista de mapa en desarrollo — disponible en la próxima versión.</div>
+        </sc-if>
+
+        <div style="flex:1;padding:12px 14px 20px;display:flex;flex-direction:column;gap:9px">
+          <sc-for list="{{ filteredTramos }}" as="t" hint-placeholder-count="6">
+            <button onClick="{{ t.select }}" style="width:100%;border:1px solid #E4E8EF;border-radius:15px;background:#fff;padding:13px 14px;cursor:pointer;display:flex;align-items:center;gap:13px;text-align:left;box-shadow:0 1px 4px rgba(22,35,63,.04)" style-hover="border-color:#EE6B1E;box-shadow:0 4px 12px rgba(238,107,30,.12)">
+              <div style="width:46px;height:46px;flex:none;border-radius:13px;background:{{ t.numBg }};color:{{ t.numFg }};display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800"><span style="font-size:9px;font-weight:700;opacity:.7;line-height:1">TRAMO</span><span style="font-size:18px;line-height:1.05">{{ t.n }}</span></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14px;font-weight:700;color:#16233F;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ t.nombre }}</div>
+                <div style="font-size:12px;color:#6B7480;margin-top:3px;display:flex;align-items:center;gap:7px"><span>{{ t.sector }}</span><span style="opacity:.4">•</span><span style="font-weight:600">Cuad. {{ t.cuadrante }}</span></div>
+              </div>
+              <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+                <sc-if value="{{ t.hasBadge }}"><span style="font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:20px;background:{{ t.estBg }};color:{{ t.estFg }}">{{ t.badge }}</span></sc-if>
+                <span style="color:#C3CAD5;font-size:16px">›</span>
+              </div>
+            </button>
+          </sc-for>
+          <sc-if value="{{ noResults }}">
+            <div style="text-align:center;color:#8B93A1;font-size:13.5px;padding:40px 20px">Sin resultados para “{{ query }}”.</div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ================= REGISTRO ================= -->
+    <sc-if value="{{ isRegistro }}">
+      <div style="min-height:100%;display:flex;flex-direction:column">
+        <div style="background:#16233F;padding:14px 16px;color:#fff;position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px">
+          <button onClick="{{ goTramos }}" style="width:38px;height:38px;border-radius:11px;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:20px;cursor:pointer">‹</button>
+          <div style="flex:1"><div style="font-size:17px;font-weight:700">Registro del Vuelo</div><div style="font-size:12px;color:rgba(255,255,255,.6)">Tramo {{ selNum }} · {{ selNombre }}</div></div>
+        </div>
+
+        <div style="flex:1;padding:16px 16px 22px;display:flex;flex-direction:column;gap:16px">
+          <!-- auto data -->
+          <div style="background:#EAF2EC;border:1px solid #CFE6D6;border-radius:16px;padding:14px 15px">
+            <div style="display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:#1E874B;margin-bottom:11px"><span style="width:16px;height:16px;border-radius:50%;background:#1E874B;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px">✓</span>COMPLETADO AUTOMÁTICAMENTE</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px 14px">
+              <div><div style="font-size:11px;color:#6B7480;font-weight:600">Fecha</div><div style="font-size:13.5px;color:#16233F;font-weight:700">{{ dateShort }}</div></div>
+              <div><div style="font-size:11px;color:#6B7480;font-weight:600">Hora de inicio</div><div style="font-size:13.5px;color:#16233F;font-weight:700">{{ horaInicio }}</div></div>
+              <div><div style="font-size:11px;color:#6B7480;font-weight:600">Funcionario</div><div style="font-size:13.5px;color:#16233F;font-weight:700">{{ userName }}</div></div>
+              <div><div style="font-size:11px;color:#6B7480;font-weight:600">Operativo</div><div style="font-size:13.5px;color:#16233F;font-weight:700">Halcón {{ userNum }}</div></div>
+            </div>
+          </div>
+
+          <!-- altura -->
+          <div>
+            <label style="display:block;font-size:13px;font-weight:700;color:#16233F;margin-bottom:8px">Altura de vuelo</label>
+            <div style="position:relative">
+              <select value="{{ form.altura }}" onChange="{{ onAltura }}" style="width:100%;height:52px;border:1.5px solid #D8DEE7;border-radius:13px;padding:0 44px 0 15px;font-size:15.5px;font-weight:600;color:#1B2431;background:#fff;cursor:pointer">
+                <option value="">Seleccionar altura…</option>
+                <option value="60 metros">60 metros</option><option value="70 metros">70 metros</option>
+                <option value="80 metros">80 metros</option><option value="90 metros">90 metros</option>
+                <option value="100 metros">100 metros</option><option value="110 metros">110 metros</option>
+                <option value="120 metros">120 metros</option><option value="200 metros">200 metros</option>
+                <option value="300 metros">300 metros</option><option value="400 metros">400 metros</option>
+                <option value="500 metros">500 metros</option><option value="600 metros">600 metros</option>
+              </select>
+              <span style="position:absolute;right:16px;top:20px;pointer-events:none;color:#8B93A1;font-size:12px">▼</span>
+            </div>
+          </div>
+
+          <!-- minutos counter -->
+          <div>
+            <label style="display:block;font-size:13px;font-weight:700;color:#16233F;margin-bottom:8px">Minutos de vuelo</label>
+            <div style="display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid #D8DEE7;border-radius:13px;padding:8px 10px">
+              <button onClick="{{ decMin }}" style="width:44px;height:44px;border:none;border-radius:11px;background:#EEF2F8;color:#16233F;font-size:24px;font-weight:700;cursor:pointer">−</button>
+              <div style="flex:1;text-align:center"><span style="font-size:28px;font-weight:800;color:#16233F">{{ form.minutos }}</span><span style="font-size:14px;color:#6B7480;font-weight:600;margin-left:5px">min</span></div>
+              <button onClick="{{ incMin }}" style="width:44px;height:44px;border:none;border-radius:11px;background:#EE6B1E;color:#fff;font-size:24px;font-weight:700;cursor:pointer">+</button>
+            </div>
+          </div>
+
+          <!-- aeronave -->
+          <div>
+            <label style="display:block;font-size:13px;font-weight:700;color:#16233F;margin-bottom:8px">Aeronave utilizada</label>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ aeronaveChips }}" as="a" hint-placeholder-count="5">
+                <button onClick="{{ a.pick }}" style="border:1.5px solid {{ a.bd }};border-radius:11px;background:{{ a.bg }};color:{{ a.fg }};padding:11px 15px;font-size:13.5px;font-weight:700;cursor:pointer">{{ a.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- tipificacion -->
+          <div>
+            <label style="display:block;font-size:13px;font-weight:700;color:#16233F;margin-bottom:8px">Tipificación</label>
+            <div style="position:relative">
+              <select value="{{ form.tipificacion }}" onChange="{{ onTip }}" style="width:100%;height:52px;border:1.5px solid #D8DEE7;border-radius:13px;padding:0 44px 0 15px;font-size:15px;font-weight:600;color:#1B2431;background:#fff;cursor:pointer">
+                <option value="Paneo Preventivo">Paneo Preventivo</option>
+                <option value="Paneo Focalizado">Paneo Focalizado</option>
+                <option value="Informe Situacional">Informe Situacional</option>
+                <option value="Monitoreo Preventivo">Monitoreo Preventivo</option>
+                <option value="Constancia de Servicio">Constancia de Servicio</option>
+              </select>
+              <span style="position:absolute;right:16px;top:20px;pointer-events:none;color:#8B93A1;font-size:12px">▼</span>
+            </div>
+          </div>
+
+          <!-- estado -->
+          <div>
+            <label style="display:block;font-size:13px;font-weight:700;color:#16233F;margin-bottom:8px">Estado del vuelo</label>
+            <div style="display:flex;gap:8px">
+              <sc-for list="{{ estadoChips }}" as="e" hint-placeholder-count="3">
+                <button onClick="{{ e.pick }}" style="flex:1;border:1.5px solid {{ e.bd }};border-radius:11px;background:{{ e.bg }};color:{{ e.fg }};padding:12px 6px;font-size:13px;font-weight:700;cursor:pointer">{{ e.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- observaciones -->
+          <div>
+            <label style="display:block;font-size:13px;font-weight:700;color:#16233F;margin-bottom:8px">Observaciones</label>
+            <textarea value="{{ form.obs }}" onChange="{{ onObs }}" placeholder="Novedades, hallazgos o comentarios del vuelo…" style="width:100%;height:88px;border:1.5px solid #D8DEE7;border-radius:13px;padding:12px 15px;font-size:14px;color:#1B2431;background:#fff;resize:none;line-height:1.5"></textarea>
+          </div>
+
+          <button onClick="{{ goConfirm }}" style="width:100%;height:56px;border:none;border-radius:15px;background:{{ registroBtnBg }};color:#fff;font-size:16.5px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(22,35,63,.2);display:flex;align-items:center;justify-content:center;gap:10px" style-hover="filter:brightness(1.06)">Revisar y confirmar<span style="font-size:18px">→</span></button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ================= CONFIRM ================= -->
+    <sc-if value="{{ isConfirm }}">
+      <div style="min-height:100%;display:flex;flex-direction:column">
+        <div style="background:#16233F;padding:14px 16px;color:#fff;position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px">
+          <button onClick="{{ backToRegistro }}" style="width:38px;height:38px;border-radius:11px;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:20px;cursor:pointer">‹</button>
+          <div style="flex:1"><div style="font-size:17px;font-weight:700">Confirmación</div><div style="font-size:12px;color:rgba(255,255,255,.6)">Revisa antes de guardar</div></div>
+        </div>
+
+        <div style="flex:1;padding:16px 16px 22px;display:flex;flex-direction:column;gap:14px">
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:18px;overflow:hidden;box-shadow:0 3px 12px rgba(22,35,63,.06)">
+            <div style="background:linear-gradient(135deg,#16233F,#22375F);padding:16px 18px;color:#fff;display:flex;align-items:center;gap:13px">
+              <div style="width:48px;height:48px;border-radius:13px;background:#EE6B1E;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800"><span style="font-size:8px;opacity:.8">TRAMO</span><span style="font-size:19px">{{ selNum }}</span></div>
+              <div style="flex:1;min-width:0"><div style="font-size:15.5px;font-weight:700;line-height:1.2">{{ selNombre }}</div><div style="font-size:12px;color:rgba(255,255,255,.65);margin-top:2px">{{ selSector }} · Cuad. {{ selCuad }}</div></div>
+            </div>
+            <div style="padding:6px 18px">
+              <sc-for list="{{ summary }}" as="s" hint-placeholder-count="7">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #EEF1F5"><span style="font-size:13px;color:#6B7480;font-weight:600">{{ s.k }}</span><span style="font-size:13.5px;color:#16233F;font-weight:700;text-align:right;max-width:60%">{{ s.v }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="flex:1"></div>
+          <div style="display:flex;gap:11px">
+            <button onClick="{{ backToRegistro }}" style="flex:1;height:56px;border:1.5px solid #D3DAE4;border-radius:15px;background:#fff;color:#16233F;font-size:16px;font-weight:700;cursor:pointer" style-hover="border-color:#16233F">✎ Editar</button>
+            <button onClick="{{ confirmFlight }}" style="flex:1.4;height:56px;border:none;border-radius:15px;background:linear-gradient(135deg,#F07D2E,#EE6B1E);color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(238,107,30,.32)" style-hover="filter:brightness(1.05)">✓ Confirmar</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ================= SUCCESS ================= -->
+    <sc-if value="{{ isSuccess }}">
+      <div style="min-height:100%;background:linear-gradient(175deg,#16233F,#1E3057);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 30px;text-align:center">
+        <div style="width:112px;height:112px;border-radius:50%;background:#1E874B;display:flex;align-items:center;justify-content:center;box-shadow:0 16px 40px rgba(30,135,75,.45);animation:hkcheck .5s cubic-bezier(.2,1.3,.5,1) both">
+          <svg width="58" height="58" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div style="font-size:23px;font-weight:800;color:#fff;margin-top:26px">Tramo registrado<br>correctamente</div>
+        <div style="font-size:14px;color:rgba(255,255,255,.7);margin-top:12px;line-height:1.5">Tramo {{ lastNum }} · {{ lastNombre }}<br>registrado en la bitácora del día</div>
+        <button onClick="{{ goHome }}" style="margin-top:40px;width:100%;height:54px;border:none;border-radius:15px;background:#EE6B1E;color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(238,107,30,.3)">Volver al inicio</button>
+        <button onClick="{{ goTramos }}" style="margin-top:12px;border:none;background:transparent;color:rgba(255,255,255,.75);font-size:14px;font-weight:600;cursor:pointer">Registrar otro tramo</button>
+      </div>
+    </sc-if>
+
+    <!-- ================= HISTORIAL ================= -->
+    <sc-if value="{{ isHistorial }}">
+      <div style="min-height:100%;display:flex;flex-direction:column">
+        <div style="background:#16233F;padding:14px 16px;color:#fff;position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px">
+          <button onClick="{{ goHome }}" style="width:38px;height:38px;border-radius:11px;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:20px;cursor:pointer">‹</button>
+          <div style="flex:1"><div style="font-size:17px;font-weight:700">Historial del Día</div><div style="font-size:12px;color:rgba(255,255,255,.6)">Halcón {{ userNum }} · {{ myFlightsCount }} vuelos · {{ myMinutes }} min</div></div>
+        </div>
+        <div style="flex:1;padding:14px 14px 20px;display:flex;flex-direction:column;gap:9px">
+          <sc-if value="{{ noMyFlights }}"><div style="text-align:center;color:#8B93A1;font-size:13.5px;padding:50px 20px">Aún no has registrado vuelos hoy.</div></sc-if>
+          <sc-for list="{{ myFlights }}" as="f" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(22,35,63,.04)">
+              <div style="width:44px;height:44px;flex:none;border-radius:12px;background:#EEF2F8;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#16233F;font-weight:800"><span style="font-size:8px;opacity:.7">T</span><span style="font-size:16px">{{ f.tramo }}</span></div>
+              <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;color:#16233F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.nombre }}</div><div style="font-size:11.5px;color:#6B7480;margin-top:2px">{{ f.hora }} · {{ f.altura }} · {{ f.dur }}min · {{ f.tip }}</div></div>
+              <span style="font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:20px;background:#E6F4EC;color:#1E874B">✓</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ================= MIS VUELOS (PDO) ================= -->
+    <sc-if value="{{ isMisVuelos }}">
+      <div style="min-height:100%;display:flex;flex-direction:column">
+        <div style="background:#16233F;padding:14px 16px 16px;color:#fff;position:sticky;top:0;z-index:10">
+          <div style="display:flex;align-items:center;gap:12px">
+            <button onClick="{{ goHome }}" style="width:38px;height:38px;border-radius:11px;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:20px;cursor:pointer">‹</button>
+            <div style="flex:1"><div style="font-size:17px;font-weight:700">Vuelos Asignados</div><div style="font-size:12px;color:rgba(255,255,255,.6)">PDO · Turno {{ turno }} · {{ turnoLabel }} · {{ turnoHoras }}</div></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:14px">
+            <div style="flex:1;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.11);border-radius:12px;padding:10px 12px"><div style="font-size:22px;font-weight:800;line-height:1">{{ pdoPend }}</div><div style="font-size:11px;color:rgba(255,255,255,.6);font-weight:600;margin-top:2px">Pendientes</div></div>
+            <div style="flex:1;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.11);border-radius:12px;padding:10px 12px"><div style="font-size:22px;font-weight:800;line-height:1;color:#3FD07A">{{ pdoDone }}</div><div style="font-size:11px;color:rgba(255,255,255,.6);font-weight:600;margin-top:2px">Realizados</div></div>
+          </div>
+        </div>
+        <div style="flex:1;padding:14px 14px 20px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:11.5px;color:#8B93A1;font-weight:700;letter-spacing:.5px;margin:2px 2px 0">CRONOGRAMA DE SOBREVUELOS</div>
+          <sc-for list="{{ assignmentsView }}" as="a" hint-placeholder-count="5">
+            <div style="background:#fff;border:1px solid #E4E8EF;border-radius:15px;padding:13px 14px;box-shadow:0 1px 4px rgba(22,35,63,.04)">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:52px;flex:none;text-align:center"><div style="font-size:9px;color:#8B93A1;font-weight:700">HORARIO</div><div style="font-size:12.5px;font-weight:800;color:#16233F;line-height:1.15">{{ a.hora }}</div></div>
+                <div style="width:1px;align-self:stretch;background:#EEF1F5"></div>
+                <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;color:#16233F;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.title }}</div><div style="font-size:11.5px;color:#6B7480;margin-top:2px">{{ a.sub }}</div></div>
+                <span style="flex:none;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:20px;background:{{ a.estBg }};color:{{ a.estFg }}">{{ a.estado }}</span>
+              </div>
+              <sc-if value="{{ a.pending }}">
+                <button onClick="{{ a.action }}" style="width:100%;margin-top:11px;border:none;border-radius:11px;background:{{ a.btnBg }};color:{{ a.btnFg }};padding:11px;font-size:13.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="filter:brightness(1.05)">{{ a.btnLabel }}</button>
+              </sc-if>
+            </div>
+          </sc-for>
+          <sc-if value="{{ allDone }}">
+            <div style="background:#EAF2EC;border:1px solid #CFE6D6;border-radius:14px;padding:16px;text-align:center;color:#1E874B;font-size:13.5px;font-weight:700">✓ Todos los sobrevuelos del turno completados</div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ================= PDO UPLOAD (SUPERVISOR) ================= -->
+    <sc-if value="{{ isPdoUpload }}">
+      <div style="min-height:100%;display:flex;flex-direction:column">
+        <div style="background:#0F1A30;padding:14px 16px;color:#fff;position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px">
+          <button onClick="{{ goSupervisor }}" style="width:38px;height:38px;border-radius:11px;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:20px;cursor:pointer">‹</button>
+          <div style="flex:1"><div style="font-size:17px;font-weight:700">Cargar PDO del día</div><div style="font-size:12px;color:rgba(255,255,255,.6)">Plan de Despliegue Operativo</div></div>
+        </div>
+        <div style="flex:1;padding:16px 16px 22px;display:flex;flex-direction:column;gap:15px">
+          <div style="font-size:13px;color:#6B7480;line-height:1.5">Carga el PDO del día. El sistema asignará automáticamente los sobrevuelos a cada operador dron según su turno.</div>
+
+          <label style="border:2px dashed #C3CAD5;border-radius:16px;background:#F7F9FC;padding:30px 20px;text-align:center;cursor:pointer;display:block" style-hover="border-color:#EE6B1E;background:#FCF6F0">
+            <div style="font-size:40px;margin-bottom:8px">📄</div>
+            <div style="font-size:14px;font-weight:700;color:#16233F">Seleccionar archivo PDO</div>
+            <div style="font-size:12px;color:#8B93A1;margin-top:4px">.xlsx — Documento Único diario</div>
+            <input type="file" accept=".xlsx,.xls" onChange="{{ onPdoFile }}" style="display:none"/>
+          </label>
+
+          <sc-if value="{{ pdoLoaded }}">
+            <div style="background:#EAF2EC;border:1px solid #CFE6D6;border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:11px">
+              <span style="width:36px;height:36px;border-radius:10px;background:#1E874B;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex:none">✓</span>
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700;color:#1E874B">PDO cargado y distribuido</div><div style="font-size:11.5px;color:#6B7480;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ pdoFile }}</div></div>
+            </div>
+          </sc-if>
+
+          <div style="font-size:11.5px;color:#8B93A1;font-weight:700;letter-spacing:.5px;margin-top:4px">DISTRIBUCIÓN POR TURNO</div>
+          <sc-for list="{{ pdoTurnos }}" as="p" hint-placeholder-count="3">
+            <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;flex:none;border-radius:11px;background:#16233F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800">{{ p.turno }}</div>
+              <div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#16233F">{{ p.label }} · {{ p.horas }}</div><div style="font-size:11.5px;color:#6B7480;margin-top:1px">Operador dron: {{ p.operador }}</div></div>
+              <span style="font-size:12px;font-weight:800;color:#EE6B1E">{{ p.count }} vuelos</span>
+            </div>
+          </sc-for>
+
+          <div style="flex:1"></div>
+          <button onClick="{{ loadPdoDemo }}" style="width:100%;height:54px;border:none;border-radius:15px;background:linear-gradient(135deg,#F07D2E,#EE6B1E);color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(238,107,30,.3)">Confirmar y distribuir PDO</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ================= SUPERVISOR ================= -->
+    <sc-if value="{{ isSupervisor }}">
+      <div style="min-height:100%;background:#EEF1F5;display:flex;flex-direction:column">
+        <div style="background:linear-gradient(160deg,#0F1A30,#1E3057);padding:16px 18px 20px;color:#fff;position:sticky;top:0;z-index:10">
+          <div style="display:flex;align-items:center;gap:12px">
+            <button onClick="{{ goHome }}" style="width:38px;height:38px;border-radius:11px;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:20px;cursor:pointer">‹</button>
+            <div style="flex:1"><div style="font-size:11px;color:#EE6B1E;font-weight:700;letter-spacing:1.5px">PANEL DE SUPERVISIÓN</div><div style="font-size:18px;font-weight:700">Operación en tiempo real</div></div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#3FD07A"><span style="width:8px;height:8px;border-radius:50%;background:#3FD07A;box-shadow:0 0 0 3px rgba(63,208,122,.2)"></span>EN VIVO</div>
+          </div>
+          <button onClick="{{ cycleSupervisor }}" style="margin-top:14px;width:100%;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:13px;padding:11px 14px;cursor:pointer;display:flex;align-items:center;gap:11px;text-align:left" style-hover="background:rgba(255,255,255,.14)">
+            <div style="width:38px;height:38px;border-radius:11px;background:#EE6B1E;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800">{{ supInitials }}</div>
+            <div style="flex:1"><div style="font-size:11px;color:rgba(255,255,255,.55);font-weight:600">Supervisor a cargo · {{ supCode }}</div><div style="font-size:14.5px;color:#fff;font-weight:700">{{ supName }}</div></div>
+            <span style="font-size:12px;color:rgba(255,255,255,.5);font-weight:600">cambiar ⇄</span>
+          </button>
+        </div>
+
+        <div style="padding:16px 14px 22px;display:flex;flex-direction:column;gap:14px">
+          <!-- PDO status -->
+          <button onClick="{{ goPdoUpload }}" style="width:100%;border:1px solid #E4E8EF;border-radius:16px;background:#fff;padding:14px 15px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:12px" style-hover="border-color:#EE6B1E">
+            <div style="width:44px;height:44px;flex:none;border-radius:12px;background:#16233F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px">📋</div>
+            <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#16233F">PDO del día</div><div style="font-size:11.5px;color:#1E874B;font-weight:600;margin-top:1px">✓ Cargado y distribuido · 3 turnos</div></div>
+            <span style="font-size:12px;font-weight:700;color:#EE6B1E">Actualizar ›</span>
+          </button>
+
+          <!-- cumplimiento por funcionario en turno -->
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:16px;padding:16px">
+            <div style="font-size:14px;font-weight:700;color:#16233F;margin-bottom:13px">Cumplimiento por funcionario en turno</div>
+            <div style="display:flex;flex-direction:column;gap:13px">
+              <sc-for list="{{ pdoTurnos }}" as="p" hint-placeholder-count="3">
+                <div style="border:1px solid #EEF1F5;border-radius:13px;overflow:hidden">
+                  <div style="background:#F7F9FC;padding:10px 13px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #EEF1F5">
+                    <div style="width:30px;height:30px;flex:none;border-radius:9px;background:#16233F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">{{ p.turno }}</div>
+                    <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700;color:#16233F">{{ p.operador }}</div><div style="font-size:10.5px;color:#8B93A1;font-weight:600">{{ p.label }} · {{ p.horas }}</div></div>
+                    <span style="flex:none;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:20px;background:{{ p.progBg }};color:{{ p.progFg }}">{{ p.prog }}</span>
+                  </div>
+                  <div style="padding:6px 13px 9px;display:flex;flex-direction:column">
+                    <sc-for list="{{ p.entries }}" as="e" hint-placeholder-count="3">
+                      <div style="display:flex;align-items:center;gap:9px;padding:6px 0">
+                        <span style="width:16px;flex:none;text-align:center;font-size:13px;font-weight:800;color:{{ e.markColor }}">{{ e.mark }}</span>
+                        <span style="flex:none;font-size:10.5px;font-weight:700;color:#8B93A1;width:74px">{{ e.hora }}</span>
+                        <span style="flex:1;min-width:0;font-size:11.5px;font-weight:600;color:#16233F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ e.title }}</span>
+                        <span style="flex:none;font-size:10px;font-weight:700;color:{{ e.estFg }}">{{ e.estado }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <!-- KPI row -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="background:#fff;border:1px solid #E4E8EF;border-radius:15px;padding:14px 15px"><div style="font-size:27px;font-weight:800;color:#16233F;line-height:1">{{ supTotalVuelos }}</div><div style="font-size:11.5px;color:#6B7480;font-weight:600;margin-top:3px">Vuelos del día</div></div>
+            <div style="background:#fff;border:1px solid #E4E8EF;border-radius:15px;padding:14px 15px"><div style="font-size:27px;font-weight:800;color:#EE6B1E;line-height:1">{{ supTotalHoras }}</div><div style="font-size:11.5px;color:#6B7480;font-weight:600;margin-top:3px">Horas de vuelo</div></div>
+          </div>
+
+          <!-- progress -->
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:16px;padding:16px;display:flex;align-items:center;gap:16px">
+            <svg width="90" height="90" viewBox="0 0 100 100" style="flex:none">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#EEF2F8" stroke-width="13"/>
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#EE6B1E" stroke-width="13" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="{{ ringOffset }}" transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .8s ease"/>
+              <text x="50" y="47" text-anchor="middle" font-size="24" font-weight="800" fill="#16233F">{{ pdoAllDone }}</text>
+              <text x="50" y="64" text-anchor="middle" font-size="10" font-weight="600" fill="#8B93A1">de {{ pdoAllTotal }}</text>
+            </svg>
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:700;color:#16233F">Avance del PDO del día</div>
+              <div style="font-size:11.5px;color:#8B93A1;font-weight:600;margin-bottom:10px">Sobrevuelos programados hoy</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><span style="width:11px;height:11px;border-radius:3px;background:#EE6B1E"></span><span style="font-size:12.5px;color:#6B7480;font-weight:600">Realizados</span><span style="margin-left:auto;font-size:13px;font-weight:800;color:#16233F">{{ pdoAllDone }}</span></div>
+              <div style="display:flex;align-items:center;gap:8px"><span style="width:11px;height:11px;border-radius:3px;background:#D5DCE5"></span><span style="font-size:12.5px;color:#6B7480;font-weight:600">Pendientes</span><span style="margin-left:auto;font-size:13px;font-weight:800;color:#16233F">{{ pdoAllPend }}</span></div>
+            </div>
+          </div>
+
+          <!-- por operador -->
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:16px;padding:16px">
+            <div style="font-size:14px;font-weight:700;color:#16233F;margin-bottom:3px">Vuelos por operador</div>
+            <div style="font-size:11.5px;color:#8B93A1;font-weight:600;margin-bottom:14px">Solo funcionarios en turno según PDO</div>
+            <div style="display:flex;flex-direction:column;gap:11px">
+              <sc-for list="{{ opStats }}" as="o" hint-placeholder-count="6">
+                <div style="display:flex;align-items:center;gap:11px">
+                  <span style="font-size:12px;font-weight:700;color:#16233F;width:64px;flex:none">Halcón {{ o.num }}</span>
+                  <div style="flex:1;height:22px;background:#F1F3F7;border-radius:7px;overflow:hidden"><div style="height:100%;width:{{ o.pct }};background:linear-gradient(90deg,#F07D2E,#EE6B1E);border-radius:7px;transition:width .8s ease"></div></div>
+                  <span style="font-size:13px;font-weight:800;color:#16233F;width:22px;text-align:right;flex:none">{{ o.count }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- por sector -->
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:16px;padding:16px">
+            <div style="font-size:14px;font-weight:700;color:#16233F;margin-bottom:12px">Tramos por sector</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ sectorStats }}" as="s" hint-placeholder-count="5">
+                <div style="border:1px solid #E4E8EF;border-radius:11px;padding:9px 13px;display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;border-radius:50%;background:#16233F"></span><span style="font-size:12.5px;color:#16233F;font-weight:600">{{ s.sector }}</span><span style="font-size:12.5px;font-weight:800;color:#EE6B1E">{{ s.count }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- mapa placeholder -->
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:16px;padding:16px">
+            <div style="font-size:14px;font-weight:700;color:#16233F;margin-bottom:12px">Mapa de tramos ejecutados</div>
+            <div style="height:150px;border-radius:12px;background:repeating-linear-gradient(45deg,#EEF2F8,#EEF2F8 12px,#E6EBF3 12px,#E6EBF3 24px);border:1px dashed #C3CAD5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#8B93A1"><span style="font-size:30px">🗺</span><span style="font-size:12.5px;font-weight:600">Vista de mapa en desarrollo</span></div>
+          </div>
+
+          <!-- recent flights -->
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:16px;padding:16px">
+            <div style="font-size:14px;font-weight:700;color:#16233F;margin-bottom:12px">Últimos vuelos</div>
+            <sc-if value="{{ noRecent }}"><div style="font-size:12.5px;color:#8B93A1;padding:6px 0">Aún no hay vuelos registrados hoy.</div></sc-if>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ recentFlights }}" as="r" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:11px;padding-bottom:9px;border-bottom:1px solid #F1F3F7">
+                  <div style="width:36px;height:36px;flex:none;border-radius:10px;background:#16233F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800">{{ r.tramo }}</div>
+                  <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700;color:#16233F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.nombre }}</div><div style="font-size:11px;color:#6B7480;margin-top:1px">Halcón {{ r.op }} · {{ r.hora }} · {{ r.fotos }} 📷</div></div>
+                  <span style="font-size:11px;font-weight:700;color:#1E874B">{{ r.dur }}min</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    </div>
+
+    <!-- gesture nav -->
+    <div style="height:22px;flex:none;background:{{ navBg }};display:flex;align-items:center;justify-content:center">
+      <div style="width:120px;height:4px;border-radius:3px;background:{{ navPill }}"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:440,&quot;height&quot;:880},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;login&quot;,&quot;options&quot;:[&quot;login&quot;,&quot;home&quot;,&quot;misvuelos&quot;,&quot;tramos&quot;,&quot;registro&quot;,&quot;evidencia&quot;,&quot;confirm&quot;,&quot;success&quot;,&quot;supervisor&quot;,&quot;pdo_upload&quot;,&quot;historial&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Revisión&quot;},&quot;clock24&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Revisión&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    const cuad=['113','113A','114','114A','115','116','116A','117'];
+    const names=["CAMINO REAL / PUENTE PIEDRA","CAMINO REAL / PEDRO LIRA URQUIETA","CAMINO TURÍSTICO","CAMINO TURÍSTICO / RAÚL LABBÉ","PADRE ARTEAGA / RAÚL LABBÉ","CAMINO EL QUILLAY","CAMINO EL SOL (REF. 3775)","LA DEHESA PANORÁMICA SUR","LA DEHESA / LA CUMBRE","EL RODEO / LA DEHESA","PUENTE LA DEHESA","AV. LA DEHESA 3788","ASCONA / EL PEUMO","EL PEUMO 108","COLEGIO NIDO DE ÁGUILAS","PLAZA DE NIDO DE ÁGUILAS","COPEC LOS TRAPENSES","LOS TRAPENSES / JOSÉ DELANO","CAMINO LOS LOTOS","PARQUE EL SOL","AGUAS CLARAS 350","EL ARRAYÁN 17.200","HIJUELAS DEL ARRAYÁN","PLAZA EL CANELO","CAPILLA EMAÚS","VALLE ESCONDIDO","PLAZA SAN ENRIQUE","PLAZA SAN ENRIQUE / RÍO MAPOCHO","RÍO MAPOCHO","OLTEN","CERRO 18","CERRO 18 CV NORTE / CV SUR","PUENTE ÑILHUE","QUEBRADA ÑILHUE","QUEBRADA HUALLALOLEN","HUINGANAL / LA CUMBRE","LA PUNTILLA 15963","CAM. LAS BRISAS 14551","CAMINO LOS REFUGIOS DEL ARRAYÁN","REFUGIOS DEL ARRAYÁN 16.401","CAMINO FARELLONES 16000","PUEBLO FARELLONES","SERVICIO FARELLONES","EL COLORADO","LA PARVA","VALLE NEVADO","CURVA 07 RUTA G-251","CURVA 12","CURVA 16","CURVA 21","CURVA 32","SENDA 6 SUR","SENDA 15 SUR","SENDA 18 SUR","CIRCUNVALACIÓN NORTE","CIRCUNVALACIÓN SUR","AV. PANORÁMICA NORTE 10750","POBLACIÓN ERMITA","BASE ERMITA","BORDE RÍO ERMITA 1 Y 2 ETAPA","PASEO ERMITA DE SAN ANTONIO","EL AVELLANO 408","NAZARETH 297","EL QUILLAY","CAMINO LA LAGUNA","CAMINO EL CAJÓN","CAMINO DE LA MINA","PLAZOLETA NEGRA","CERRO PAN DE AZÚCAR"];
+    // Tramos oficiales — "Ubicación de tramos" (Sección Drone Halcón, AMSZO)
+    const D=`1|OLTEN|113|-33.324548|-70.503843
+2|CAMINO LOS LOTOS|113|-33.339113|-70.493721
+3|PARQUE EL SOL|113|-33.345862|-70.507699
+4|LA CUMBRE / EL ESTANQUE|113|-33.32433|-70.510591
+5|GOLF DE MANQUEHUE LAS HUALTATAS|113A|-33.337799|-70.54238
+6|GOLF LOMAS DE LA DEHESA|113A|-33.337895|-70.537485
+7|EXPLANADA LOS NOGALES|113A|-33.323113|-70.532466
+8|LA DEHESA PANORÁMICA SUR|113A|-33.334036|-70.52146
+9|COPEC LOS TRAPENSES|114|-33.353709|-70.539872
+10|LOS LITRES|114A|-33.316007|-70.551707
+11|LOS BRAVOS|114A|-33.323344|-70.569764
+12|CERRO MANQUEHUE|114A|-33.344044|-70.56767
+13|CAMINO REAL / PUENTE PIEDRA|114A|-33.32479|-70.551673
+14|CENTRAL LBS|115|-33.351674|-70.508234
+15|COLEGIO NIDO DE ÁGUILAS|115|-33.352488|-70.501165
+16|PADRE ARTEAGA / RAÚL LABBÉ|115|-33.362717|-70.508778
+17|PARQUE DE LA CHILENIDAD|115|-33.355693|-70.493379
+18|PORTAL LA DEHESA|115|-33.35766|-70.517032
+19|PLAZA NIDO DE ÁGUILAS|115|-33.354345|-70.507821
+20|SKATEPARK|115|-33.362338|-70.500918
+21|CCS9|115|-33.364262|-70.507357
+22|VIRGEN PEREGRINA|116|-33.365726|-70.501361
+23|CAMINO TURÍSTICO|116A|-33.36738|-70.532718
+24|PLAZA EL CANELO|116A|-33.360128|-70.535397
+25|CAMINO HUALLALOLÉN|117|-33.342206|-70.465699
+26|PASTOR FERNÁNDEZ|117|-33.360933|-70.480157
+27|HIJUELAS DEL ARRAYÁN|117|-33.346766|-70.480199
+28|ÁGUILA 1|116|-33.365524|-70.513791
+29|PLAZA SAN ENRIQUE|116|-33.36314|-70.493467
+30|EL RODEO / LA DEHESA|115|-33.353405|-70.518522
+31|CAPILLA EMAÚS|117|-33.344307|-70.470542
+32|PASTOR FERNÁNDEZ / EL CAJÓN|117|-33.360923|-70.480169
+33|CERRO BLANCO|114|-33.361402|-70.547872
+34|EL OFICIO / LAS PATAGUAS|114|-33.350431|-70.533676
+35|GOLF DE MANQUEHUE / EL PARQUE|114|-33.337017|-70.548024
+36|CAMINO CENTRAL ACCESO C. DEL MEDIO|113A|-33.349812|-70.522785
+37|JUAN PABLO II|116|-33.365722|-70.513664
+38|PASEO ALCALÁ / PASEO EL CID|113A|-33.323074|-70.535866
+39|LAS HUALTATAS / PIE ANDINO|113A|-33.323429|-70.538711
+40|LA DEHESA 4580|113A|-33.328298|-70.519661
+41|BASEL / LOS ALPES|113|-33.330189|-70.513922
+42|PARQUE SUR / HACIENDA|113|-33.333308|-70.51403
+43|BOULEVARD DE LOS PÁJAROS|114A|-33.324711|-70.551649
+44|GRAN VISTA / MANQUECURA|114A|-33.337376|-70.566345
+45|PUNTA DE ÁGUILAS / CAMINO LA HUERTA|114A|-33.345629|-70.555228
+46|VALLE MONASTERIO / C. EL CIELO|114|-33.347347|-70.546792
+47|ASCONA / EL PEUMO|113|-33.332583|-70.507847
+48|LOS CACTUS / EL TRANQUE|113A|-33.35976|-70.520524
+49|HUINGANAL / PIE ANDINO|113|-33.333179|-70.506116
+50|LOS QUINCHEROS / CERRO 18|115|-33.356625|-70.503226
+51|ETAPA 1 POBLACIÓN ERMITA (DOCK2)|116|-33.363642|-70.498588
+52|LAS LOMAS 1 Y 2 (DOCK2)|116|-33.363354|-70.502835
+53|ERMITA / VIRGEN PEREGRINA|116|-33.365737|-70.501359
+54|GOLF DE MANQUEHUE / PADRE TED HUARD|114A|-33.337079|-70.551525
+55|EL YUNQUE|113|-33.337891|-70.49912
+56|CAMINO EL OFICIO / EL TORDILLO|114|-33.347548|-70.538252
+57|VALLE MONASTERIO 2332|114|-33.352825|-70.545777
+58|AGUAS BLANCAS / AGUAS CLARAS|114|-33.358898|-70.546675
+59|PUNTA DE ÁGUILAS 9300|114A|-33.336361|-70.562333
+60|CAMINO REAL / PEDRO LIRA URQUIETA|114A|-33.328649|-70.547997
+61|LOMAS DE LA CRUZ 400|114|-33.35304|-70.542987
+62|LA DEHESA / LA CUMBRE|113A|-33.322895|-70.518723
+63|CAMINO EL SOL (REF. N° 3775)|113|-33.336635|-70.49811
+64|VALLE ESCONDIDO|113|-33.340142|-70.49208
+65|ROTONDA LOS TRAPENSES|114|-33.343064|-70.546146
+66|CAMINO TURÍSTICO / RAÚL LABBÉ|116A|-33.368526|-70.519857
+67|PARQUE LAS HUALTATAS|113A|-33.350541|-70.533751
+68|AGUAS CLARAS 350|114|-33.355255|-70.546554
+69|CAMINO EL QUILLAY|113|-33.342874|-70.498981`.split('\n').map(r=>r.split('|'));
+    const zona={113:'La Dehesa','113A':'La Dehesa',114:'Los Trapenses','114A':'Manquehue',115:'Nido de Águilas',116:'San Enrique','116A':'San Enrique',117:'El Arrayán'};
+    const tramos=D.map((r,i)=>({n:+r[0],nombre:r[1],sector:zona[r[2]]||r[2],cuadrante:r[2],lat:+r[3],lng:+r[4],estado:'Pendiente'}));
+    this.tramosByN={};
+    tramos.forEach(t=>{this.tramosByN[t.n]=t;});
+
+    this.operators={
+      1:{name:'Carlos Tapia',cargo:'Operador RPAS'},2:{name:'Ahmed Allami',cargo:'Operador RPAS'},
+      3:{name:'José Correa',cargo:'Operador RPAS'},4:{name:'Esteban Cáceres',cargo:'Operador RPAS'},
+      5:{name:'Sebastián Castillo',cargo:'Operador RPAS'},6:{name:'Miguel Gallardo',cargo:'Operador RPAS'},
+      7:{name:'Juan Gutiérrez',cargo:'Operador RPAS'}};
+    this.turnoLabels={A:'Mañana',B:'Tarde',N:'Noche'};
+    this.turnoHoras={A:'07:00–14:00',B:'14:00–22:00',N:'22:00–07:00'};
+    // PDO del día: asigna operador (halcón) por turno; quien no figura está de día libre
+    this.pdo={
+      A:{halcon:2,entries:[
+        {hora:'07:15–08:00',sector:null,label:'Disposición J.O. RPA · Servicio Colegio'},
+        {hora:'09:10–10:00',sector:68},{hora:'10:30–11:00',sector:15},
+        {hora:'11:30–12:00',sector:31},{hora:'13:00–13:40',sector:27}]},
+      B:{halcon:5,entries:[
+        {hora:'14:20–15:30',sector:23},{hora:'16:00–17:30',sector:68},
+        {hora:'18:00–19:00',sector:28},{hora:'19:00–20:00',sector:15},
+        {hora:'20:15–21:00',sector:31},{hora:'21:10–21:40',sector:27}]},
+      N:{halcon:1,entries:[
+        {hora:'22:20–23:00',sector:23},{hora:'23:30–00:00',sector:66},
+        {hora:'00:30–01:00',sector:68},{hora:'01:30–02:00',sector:15},
+        {hora:'02:30–03:00',sector:68},{hora:'04:00–04:30',sector:31},
+        {hora:'05:30–06:30',sector:27}]}};
+    this.supervisors=[{name:'Ignacio Vidal',code:'S4'},{name:'Claudio Garay',code:'S23'}];
+    this.aeronaves=['DUAL','AUTEL','3TD','MATRICE 300','AIR 2'];
+    this.tipos=['Paneo Preventivo','Paneo Focalizado','Informe Situacional','Monitoreo Preventivo','Constancia de Servicio'];
+    this.alturasList=['60 metros','70 metros','80 metros','90 metros','120 metros','200 metros','300 metros'];
+    this.fotoBgs=['linear-gradient(135deg,#4A6FA5,#2C4A6B)','linear-gradient(135deg,#6B8E4E,#3F5E2E)','linear-gradient(135deg,#A5794A,#6B4A2C)','linear-gradient(135deg,#8E5A6B,#5E2C3F)','linear-gradient(135deg,#4A8E8E,#2C5E5E)','linear-gradient(135deg,#7A6BA5,#463F6B)'];
+
+    // sin datos de ejemplo: los vuelos se acumulan al registrarlos
+    const flights=[];
+
+    let start='login';
+    const ss=props.startScreen; if(ss&&ss!=='login')start=ss;
+    const initUser=start==='login'?null:{num:4,...this.operators[4]};
+
+    this.state={
+      screen:start, halcon: start==='login'?'':'4', pass:'', user: initUser,
+      query:'', filter:'all', showMapNote:false,
+      tramos, flights, selected: start==='login'?null:tramos[0],
+      now:new Date(),
+      form:this.blankForm(),
+      lastFlight:null, supervisor:this.supervisors[0],
+      pdoLoaded:true, pdoFile:'PDO_DOCUMENTO_UNICO_04-08-2026.xlsx',
+      pdoA:this.buildAllAssignments(),
+      activeAssign:null
+    };
+  }
+  turnoForHalcon(n){for(const k of ['A','B','N'])if(this.pdo[k].halcon===n)return k;return null;}
+  buildAllAssignments(){
+    const out={};
+    for(const k of ['A','B','N'])out[k]=this.pdo[k].entries.map((e,i)=>({id:i,hora:e.hora,sector:e.sector,label:e.label||null,estado:'Pendiente'}));
+    return out;
+  }
+  blankForm(){return{altura:'',minutos:20,aeronave:'DUAL',tipificacion:'Paneo Preventivo',estado:'Realizado',obs:'',fotos:[],horaInicio:''};}
+  componentDidMount(){this.timer=setInterval(()=>this.setState({now:new Date()}),20000);}
+  componentWillUnmount(){clearInterval(this.timer);}
+
+  fmtClock(d){const h=d.getHours(),m=String(d.getMinutes()).padStart(2,'0');
+    if(this.props.clock24===false){const ap=h<12?'AM':'PM';const hh=((h+11)%12)+1;return hh+':'+m+' '+ap;}
+    return String(h).padStart(2,'0')+':'+m;}
+  go(screen){this.setState({screen});}
+
+  renderVals(){
+    const s=this.state, u=s.user;
+    const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const d=s.now;
+    const dateShort=dias[d.getDay()]+' '+String(d.getDate()).padStart(2,'0')+' '+meses[d.getMonth()]+' '+d.getFullYear();
+    const clock=this.fmtClock(d);
+    const navy='#16233F';
+
+    const realizados=s.tramos.filter(t=>t.estado==='Realizado').length;
+    const pendientes=69-realizados;
+
+    // tramos: estado del día — PDO completo (3 turnos), descontando los realizados
+    const pdoToday={};
+    if(s.pdoLoaded)['A','B','N'].forEach(k=>{(s.pdoA[k]||[]).forEach(a=>{if(a.sector)pdoToday[a.sector]=true;});});
+    const q=s.query.trim().toLowerCase();
+    let filtered=s.tramos.filter(t=>{
+      const dn=t.estado==='Realizado', inPdo=!!pdoToday[t.n];
+      if(s.filter==='pend'&&(dn||!inPdo))return false;
+      if(s.filter==='done'&&!dn)return false;
+      if(!q)return true;
+      return t.nombre.toLowerCase().includes(q)||String(t.n)===q||('tramo '+t.n).includes(q);
+    });
+    const filteredTramos=filtered.map(t=>{
+      const done=t.estado==='Realizado', inPdo=!!pdoToday[t.n];
+      return {...t,select:()=>this.selectTramo(t),
+        badge:done?'Realizado hoy':(inPdo?'PDO · pendiente':''),hasBadge:done||inPdo,
+        numBg:done?'#EEF2F8':'#FCEEE2',numFg:done?'#8B93A1':'#EE6B1E',
+        estBg:done?'#E6F4EC':'#FBF0DC',estFg:done?'#1E874B':'#C77B0A'};});
+    const pendPdoToday=s.tramos.filter(t=>pdoToday[t.n]&&t.estado!=='Realizado').length;
+
+    // form chips
+    const f=s.form;
+    const aeronaveChips=this.aeronaves.map(a=>{const on=f.aeronave===a;
+      return{label:a,pick:()=>this.setField('aeronave',a),
+        bg:on?'#16233F':'#fff',fg:on?'#fff':'#16233F',bd:on?'#16233F':'#D8DEE7'};});
+    const estados=['Realizado','Interrumpido','Reprogramado'];
+    const estadoChips=estados.map(e=>{const on=f.estado===e;
+      return{label:e,pick:()=>this.setField('estado',e),
+        bg:on?'#16233F':'#fff',fg:on?'#fff':'#16233F',bd:on?'#16233F':'#D8DEE7'};});
+
+    // fotos
+    const fotos=f.fotos.map((ph,i)=>({bg:this.fotoBgs[i%this.fotoBgs.length],
+      icon:ph.type==='video'?'🎬':'📷',name:ph.name,remove:()=>this.removeFoto(i)}));
+    const nFotoImg=f.fotos.filter(x=>x.type!=='video').length;
+    const nVid=f.fotos.filter(x=>x.type==='video').length;
+    const fotoSummary=f.fotos.length?(nFotoImg+' foto(s)'+(nVid?' · '+nVid+' video(s)':'')):'Agregar fotos y videos';
+
+    // folder path
+    const sel=s.selected||{n:'—',nombre:'—',sector:'—',cuadrante:'—'};
+    const yr=d.getFullYear(), mo=meses[d.getMonth()], dd=String(d.getDate()).padStart(2,'0');
+    const crumbLabels=[String(yr),mo,dd,'Tramo '+sel.n,'Halcón '+(u?u.num:'')];
+    const folderCrumbs=crumbLabels.map((label,i)=>({label,sep:i<crumbLabels.length-1?'›':''}));
+
+    // summary for confirm
+    const summary=[
+      {k:'Altura de vuelo',v:f.altura||'—'},
+      {k:'Duración',v:f.minutos+' minutos'},
+      {k:'Aeronave',v:f.aeronave},
+      {k:'Tipificación',v:f.tipificacion},
+      {k:'Cuadrante',v:sel.cuadrante},
+      {k:'Estado',v:f.estado},
+      {k:'Observaciones',v:f.obs?(f.obs.length>34?f.obs.slice(0,34)+'…':f.obs):'Sin observaciones'}
+    ];
+
+    // my flights (dashboard/historial)
+    const myNum=u?u.num:0;
+    const myFlights=s.flights.filter(fl=>fl.op===myNum).sort((a,b)=>b.hora.localeCompare(a.hora));
+    const myMinutes=myFlights.reduce((a,b)=>a+b.dur,0);
+
+    // supervisor
+    const totalMin=s.flights.reduce((a,b)=>a+b.dur,0);
+    const supTotalHoras=(totalMin/60).toFixed(1)+'h';
+    // solo funcionarios que figuran en el PDO del día
+    const pdoOps=['A','B','N'].map(k=>this.pdo[k].halcon);
+    const counts={}; pdoOps.forEach(n=>counts[n]=0);
+    s.flights.forEach(fl=>{if(counts[fl.op]!=null)counts[fl.op]++;});
+    const maxC=Math.max(1,...Object.values(counts));
+    const opStats=pdoOps.map(n=>({num:n,name:this.operators[n].name,count:counts[n],pct:Math.round(counts[n]/maxC*100)+'%'}));
+    opStats.sort((a,b)=>b.count-a.count);
+    const secCount={}; s.tramos.filter(t=>t.estado==='Realizado').forEach(t=>{secCount[t.sector]=(secCount[t.sector]||0)+1;});
+    const sectorStats=Object.keys(secCount).map(k=>({sector:k,count:secCount[k]})).sort((a,b)=>b.count-a.count);
+    const recentFlights=[...s.flights].sort((a,b)=>b.hora.localeCompare(a.hora)).slice(0,6)
+      .map(fl=>({tramo:fl.tramo,nombre:fl.nombre,op:fl.op,hora:fl.hora,dur:fl.dur,fotos:fl.fotos}));
+    // avance del PDO del día (todos los turnos)
+    const pdoAllFl=['A','B','N'].flatMap(k=>(s.pdoA[k]||[]).filter(a=>a.sector));
+    const pdoAllDone=pdoAllFl.filter(a=>a.estado==='Realizado').length;
+    const pdoAllTotal=pdoAllFl.length;
+    const ringOffset=(251.3*(1-(pdoAllTotal?pdoAllDone/pdoAllTotal:0))).toFixed(1);
+
+    // chips styling for tramos filter
+    const chip=(on)=>on?{bg:'#EE6B1E',fg:'#fff'}:{bg:'rgba(255,255,255,.13)',fg:'#fff'};
+    const cA=chip(s.filter==='all'),cP=chip(s.filter==='pend'),cD=chip(s.filter==='done');
+
+    const last=s.lastFlight||{tramo:'—',nombre:'—'};
+
+    // PDO assignments for logged operator (día libre si no figura en el PDO)
+    const myTurno=u&&u.num?this.turnoForHalcon(u.num):null;
+    const diaLibre=!!u&&!!u.num&&!myTurno;
+    const myAssign=(myTurno&&s.pdoLoaded)?(s.pdoA[myTurno]||[]):[];
+    const assignmentsView=myAssign.map(a=>{
+      const t=a.sector?this.tramosByN[a.sector]:null;
+      const done=a.estado==='Realizado';
+      return {id:a.id,hora:a.hora,
+        title: t?('Sector '+a.sector+' · '+t.nombre):a.label,
+        sub: t?('Tramo '+a.sector+' · '+t.sector+' · Cuad. '+t.cuadrante):'Disposición operativa',
+        isFlight: !!t, estado:a.estado, done, pending:!done,
+        estBg:done?'#E6F4EC':'#FBF0DC', estFg:done?'#1E874B':'#C77B0A',
+        btnBg: t?'linear-gradient(135deg,#F07D2E,#EE6B1E)':'#16233F', btnFg:'#fff',
+        btnLabel: t?'Realizar vuelo →':'Marcar realizado ✓',
+        action: t?(()=>this.realizeAssignment(myTurno,a)):(()=>this.markAssignDone(myTurno,a.id))};
+    });
+    const pdoPend=myAssign.filter(a=>a.estado==='Pendiente').length;
+    const pdoDone=myAssign.length-pdoPend;
+    const nextA=assignmentsView.find(a=>!a.done);
+    // supervisor: cumplimiento por funcionario en turno
+    const pdoTurnos=['A','B','N'].map(k=>{
+      const h=this.pdo[k].halcon, list=s.pdoA[k]||[];
+      const fl=list.filter(a=>a.sector), dn=fl.filter(a=>a.estado==='Realizado').length;
+      const all=fl.length>0&&dn===fl.length;
+      return {turno:k,label:this.turnoLabels[k],horas:this.turnoHoras[k],
+        operador:'Halcón '+h+' · '+this.operators[h].name,count:fl.length,
+        prog:dn+'/'+fl.length+' realizados', progBg:all?'#E6F4EC':'#FBF0DC', progFg:all?'#1E874B':'#C77B0A',
+        entries:list.map(a=>{const t=a.sector?this.tramosByN[a.sector]:null;const d2=a.estado==='Realizado';
+          return {hora:a.hora,title:t?('S'+a.sector+' · '+t.nombre):a.label,
+            mark:d2?'✓':'○',markColor:d2?'#1E874B':'#C3CAD5',estado:a.estado,estFg:d2?'#1E874B':'#C77B0A'};})};
+    });
+
+    return {
+      // chrome
+      clock, statusBg:navy, navBg: (s.screen==='login'||s.screen==='success')?navy:'#EEF1F5',
+      navPill:(s.screen==='login'||s.screen==='success')?'rgba(255,255,255,.5)':'#C3CAD5',
+      dateShort, dateLong:dateShort, turno:myTurno||'—',
+      turnoLabel:myTurno?this.turnoLabels[myTurno]:'Día libre',
+      turnoHoras:myTurno?this.turnoHoras[myTurno]:'Sin turno asignado hoy',
+      turnoDot:myTurno?'#3FD07A':'#C3CAD5', diaLibre, hasTurno:!!myTurno&&s.pdoLoaded,
+      syncMin:String((d.getMinutes())).padStart(2,'0'),
+      // screen flags
+      isLogin:s.screen==='login',isHome:s.screen==='home',isTramos:s.screen==='tramos',
+      isRegistro:s.screen==='registro',isEvidencia:s.screen==='evidencia',isConfirm:s.screen==='confirm',
+      isSuccess:s.screen==='success',isHistorial:s.screen==='historial',isSupervisor:s.screen==='supervisor',
+      isMisVuelos:s.screen==='misvuelos',isPdoUpload:s.screen==='pdo_upload',
+      // login
+      halcon:s.halcon, pass:s.pass, onHalcon:e=>this.setState({halcon:e.target.value}),
+      onPass:e=>this.setState({pass:e.target.value}),
+      halconName: s.halcon?this.operators[+s.halcon].name:'', halconCargo:s.halcon?this.operators[+s.halcon].cargo:'',
+      loginBtnBg: s.halcon?'linear-gradient(135deg,#F07D2E,#EE6B1E)':'#C3CAD5',
+      login:()=>this.login(),
+      // user
+      userNum:u?u.num:'', userName:u?u.name:'',
+      vuelosHoy:myFlights.length, realizadosCount:realizados, pendientesCount:pendPdoToday, totalTramos:69,
+      // nav
+      goHome:()=>this.go('home'),goTramos:()=>this.go('tramos'),goHistorial:()=>this.go('historial'),
+      goSupervisor:()=>this.enterSupervisor(),logout:()=>this.logout(),
+      // tramos
+      query:s.query,onQuery:e=>this.setState({query:e.target.value}),
+      filteredTramos, noResults:filteredTramos.length===0,
+      setFilterAll:()=>this.setState({filter:'all'}),setFilterPend:()=>this.setState({filter:'pend'}),setFilterDone:()=>this.setState({filter:'done'}),
+      chipAllBg:cA.bg,chipAllFg:cA.fg,chipPendBg:cP.bg,chipPendFg:cP.fg,chipDoneBg:cD.bg,chipDoneFg:cD.fg,
+      toggleMap:()=>this.setState({showMapNote:!s.showMapNote}),showMapNote:s.showMapNote,
+      // registro
+      selNum:sel.n,selNombre:sel.nombre,selSector:sel.sector,selCuad:sel.cuadrante,
+      horaInicio:f.horaInicio||clock, form:f,
+      onAltura:e=>this.setField('altura',e.target.value),
+      onTip:e=>this.setField('tipificacion',e.target.value),
+      onObs:e=>this.setField('obs',e.target.value),
+      incMin:()=>this.setField('minutos',Math.min(180,f.minutos+1)),
+      decMin:()=>this.setField('minutos',Math.max(1,f.minutos-1)),
+      aeronaveChips, estadoChips,
+      fotoSummary, goEvidencia:()=>this.go('evidencia'),
+      registroBtnBg:'linear-gradient(135deg,#22375F,#16233F)', goConfirm:()=>this.go('confirm'),
+      // evidencia
+      fotos, hasFotos:f.fotos.length>0, noFotos:f.fotos.length===0, fotosCount:f.fotos.length,
+      folderCrumbs, addFoto:()=>this.addFoto('foto'), addVideo:()=>this.addFoto('video'),
+      backToRegistro:()=>this.go('registro'),
+      // confirm
+      summary, confirmFlight:()=>this.confirmFlight(),
+      // success
+      lastNum:last.tramo,lastNombre:last.nombre,
+      // historial
+      myFlights, myFlightsCount:myFlights.length, myMinutes, noMyFlights:myFlights.length===0,
+      // supervisor
+      supTotalVuelos:s.flights.length,supTotalHoras,supRealizados:realizados,supPendientes:pendientes,
+      ringOffset, pdoAllDone, pdoAllTotal, pdoAllPend:pdoAllTotal-pdoAllDone,
+      opStats, sectorStats, recentFlights, noRecent:recentFlights.length===0,
+      supName:s.supervisor.name, supCode:s.supervisor.code,
+      supInitials:s.supervisor.name.split(' ').map(w=>w[0]).join('').slice(0,2),
+      cycleSupervisor:()=>this.cycleSupervisor(),
+      // PDO / assignments
+      assignmentsView, hasAssign:assignmentsView.length>0, noAssign:assignmentsView.length===0,
+      pdoLoaded:s.pdoLoaded, pdoPend, pdoDone, pdoTotal:assignmentsView.length,
+      nextHora:nextA?nextA.hora:'—', nextTitle:nextA?nextA.title:'Todos los sobrevuelos completados',
+      allDone: assignmentsView.length>0 && pdoPend===0,
+      pdoFile:s.pdoFile, pdoTurnos,
+      goMisVuelos:()=>this.go('misvuelos'), goPdoUpload:()=>this.go('pdo_upload'),
+      onPdoFile:e=>{const f=e.target.files&&e.target.files[0]; if(f)this.loadPdo(f.name);},
+      loadPdoDemo:()=>this.loadPdo()
+    };
+  }
+
+  setField(k,v){this.setState(st=>({form:{...st.form,[k]:v}}));}
+  login(){if(!this.state.halcon)return;const n=+this.state.halcon;
+    const u={num:n,...this.operators[n]};
+    this.setState({user:u,screen:'home',pass:''});}
+  loadPdo(name){this.setState(st=>({pdoLoaded:true,pdoFile:name||st.pdoFile,screen:'supervisor',pdoA:this.buildAllAssignments()}));}
+  realizeAssignment(turno,a){const t=this.tramosByN[a.sector]; if(!t)return;
+    this.setState({selected:t,activeAssign:{turno,id:a.id},screen:'registro',
+      form:{...this.blankForm(),tipificacion:'Paneo Focalizado',horaInicio:this.fmtClock(new Date())}});}
+  markAssignDone(turno,id){this.setState(st=>({pdoA:{...st.pdoA,[turno]:st.pdoA[turno].map(a=>a.id===id?{...a,estado:'Realizado'}:a)}}));}
+  logout(){this.setState({screen:'login',halcon:'',pass:'',user:null,form:this.blankForm(),query:'',filter:'all'});}
+  enterSupervisor(){if(!this.state.user)this.setState({user:{num:0,name:'Supervisión',cargo:'Central'}});this.setState({screen:'supervisor'});}
+  cycleSupervisor(){this.setState(st=>{const i=this.supervisors.indexOf(st.supervisor);return{supervisor:this.supervisors[(i+1)%this.supervisors.length]};});}
+  selectTramo(t){this.setState({selected:t,activeAssign:null,screen:'registro',form:{...this.blankForm(),horaInicio:this.fmtClock(new Date())}});}
+  addFoto(type){this.setState(st=>{const n=st.form.fotos.filter(x=>x.type===type).length+1;
+    const name=(type==='video'?'VID_':'IMG_')+String(1000+st.form.fotos.length).slice(1)+(type==='video'?'.mp4':'.jpg');
+    return{form:{...st.form,fotos:[...st.form.fotos,{type,name}]}};});}
+  removeFoto(i){this.setState(st=>({form:{...st.form,fotos:st.form.fotos.filter((_,x)=>x!==i)}}));}
+  confirmFlight(){
+    const st=this.state, sel=st.selected, u=st.user, f=st.form;
+    const d=new Date(); const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const flight={tramo:sel.n,nombre:sel.nombre,sector:sel.sector,op:u.num||4,
+      funcionario:u.name,hora:f.horaInicio||this.fmtClock(d),dur:f.minutos,
+      altura:f.altura||'90 metros',aeronave:f.aeronave,tip:f.tipificacion,fotos:f.fotos.length};
+    const tramos=st.tramos.map(t=>t.n===sel.n?{...t,estado:'Realizado'}:t);
+    const aa=st.activeAssign;
+    const pdoA=aa?{...st.pdoA,[aa.turno]:st.pdoA[aa.turno].map(a=>a.id===aa.id?{...a,estado:'Realizado'}:a)}:st.pdoA;
+    this.setState({tramos,flights:[...st.flights,flight],lastFlight:flight,screen:'success',form:this.blankForm(),pdoA,activeAssign:null});
+  }
+}
+</script>
+</body>
+</html>

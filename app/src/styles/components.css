@@ -1,0 +1,364 @@
+/* ============ Header de pantalla (navy, sticky) ============ */
+.screen {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.header {
+  background: var(--azul);
+  padding: 14px 16px 16px;
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.header--gradient {
+  background: linear-gradient(160deg, var(--azul-header-grad-a), var(--azul-header-grad-b));
+  border-radius: 0 0 26px 26px;
+}
+.header--dark {
+  background: var(--azul-profundo);
+}
+.header--supervisor {
+  background: linear-gradient(160deg, var(--azul-profundo), var(--azul-header-grad-b));
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-btn {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 11px;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-title {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.header-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 1px;
+}
+
+.header-stats {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.header-stat {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.header-stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+.header-stat-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ============ Contenido ============ */
+.content {
+  flex: 1;
+  padding: 16px 16px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.content--tight {
+  padding: 12px 14px 20px;
+  gap: 9px;
+}
+
+/* ============ Tarjetas ============ */
+.card {
+  background: var(--superficie);
+  border: 1px solid var(--borde-1);
+  border-radius: var(--radio-tarjeta);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+/* ============ KPIs ============ */
+.kpi-row {
+  display: flex;
+  gap: 12px;
+}
+.kpi-card {
+  flex: 1;
+  background: var(--superficie);
+  border: 1px solid var(--borde-1);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--sombra-tarjeta);
+}
+.kpi-value {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--texto-titulo);
+  line-height: 1;
+}
+.kpi-value--accent {
+  color: var(--naranjo);
+}
+.kpi-label {
+  font-size: 12px;
+  color: var(--texto-secundario);
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ============ Badges / chips ============ */
+.badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: var(--radio-chip);
+  white-space: nowrap;
+}
+.badge--pend {
+  background: var(--ambar-fondo);
+  color: var(--ambar-texto);
+}
+.badge--done {
+  background: var(--verde-fondo);
+  color: var(--verde-ok);
+}
+.badge--neutral {
+  background: #eef2f8;
+  color: var(--texto-tenue);
+}
+
+.chip {
+  flex: none;
+  border: 1.5px solid var(--borde-2);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--texto-titulo);
+  padding: 11px 15px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.chip--on {
+  background: var(--azul);
+  color: #fff;
+  border-color: var(--azul);
+}
+.chip--pill {
+  border: none;
+  border-radius: 20px;
+  padding: 8px 15px;
+  font-size: 12.5px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.13);
+  color: rgba(255, 255, 255, 0.75);
+}
+.chip--pill-on {
+  background: #fff;
+  color: var(--azul);
+}
+
+/* ============ Botones ============ */
+.btn {
+  border: none;
+  border-radius: var(--radio-boton);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--naranjo-grad-a), var(--naranjo-grad-b));
+  color: #fff;
+  height: 54px;
+  font-size: 16.5px;
+  box-shadow: var(--sombra-cta);
+}
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+.btn-dark {
+  background: var(--azul);
+  color: #fff;
+  height: 56px;
+  font-size: 16.5px;
+  box-shadow: 0 8px 20px rgba(22, 35, 63, 0.2);
+}
+.btn-dark:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.btn-outline {
+  background: #fff;
+  color: var(--texto-titulo);
+  border: 1.5px solid var(--borde-3);
+  height: 56px;
+  font-size: 16px;
+}
+.btn-outline:hover:not(:disabled) {
+  border-color: var(--azul);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--texto-titulo);
+  height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.btn-danger-ghost {
+  background: transparent;
+  color: var(--rojo);
+  height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ============ Formularios ============ */
+.field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texto-titulo);
+  margin-bottom: 8px;
+}
+.field-select,
+.field-input,
+.field-textarea {
+  width: 100%;
+  border: 1.5px solid var(--borde-2);
+  border-radius: 13px;
+  padding: 0 15px;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: #1b2431;
+  background: #fff;
+  font-family: var(--font-sans);
+}
+.field-select,
+.field-input {
+  height: 52px;
+}
+.field-textarea {
+  height: 88px;
+  padding: 12px 15px;
+  font-size: 14px;
+  font-weight: 400;
+  resize: none;
+  line-height: 1.5;
+}
+.field-wrap {
+  position: relative;
+}
+.field-caret {
+  position: absolute;
+  right: 16px;
+  top: 20px;
+  pointer-events: none;
+  color: var(--texto-tenue);
+  font-size: 12px;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1.5px solid var(--borde-2);
+  border-radius: 13px;
+  padding: 8px 10px;
+}
+.stepper-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 11px;
+  font-size: 24px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.stepper-btn--dec {
+  background: #eef2f8;
+  color: var(--azul);
+}
+.stepper-btn--inc {
+  background: var(--naranjo);
+  color: #fff;
+}
+.stepper-value {
+  flex: 1;
+  text-align: center;
+}
+.stepper-value span:first-child {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--texto-titulo);
+}
+.stepper-value span:last-child {
+  font-size: 14px;
+  color: var(--texto-secundario);
+  font-weight: 600;
+  margin-left: 5px;
+}
+
+/* ============ Listas ============ */
+.list-item {
+  background: var(--superficie);
+  border: 1px solid var(--borde-1);
+  border-radius: 15px;
+  padding: 13px 14px;
+  box-shadow: 0 1px 4px rgba(22, 35, 63, 0.04);
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--texto-tenue);
+  font-size: 13.5px;
+  padding: 40px 20px;
+}
+
+/* ============ Utilidades ============ */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.spacer {
+  flex: 1;
+}
+.center-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}

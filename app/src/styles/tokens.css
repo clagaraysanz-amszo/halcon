@@ -1,0 +1,138 @@
+:root {
+  /* Azules institucionales */
+  --azul: #16233f;
+  --azul-header-grad-a: #16233f;
+  --azul-header-grad-b: #1e3057;
+  --azul-login-grad-a: #16233f;
+  --azul-login-grad-b: #1c2e52;
+  --azul-profundo: #0f1a30;
+
+  /* Acento naranjo AMSZO */
+  --naranjo: #ee6b1e;
+  --naranjo-grad-a: #f07d2e;
+  --naranjo-grad-b: #ee6b1e;
+  --naranjo-hover: #d75e14;
+
+  /* Estado */
+  --verde-ok: #1e874b;
+  --verde-claro: #3fd07a;
+  --verde-fondo: #e6f4ec;
+  --verde-fondo-2: #eaf2ec;
+  --verde-borde: #cfe6d6;
+  --ambar-texto: #c77b0a;
+  --ambar-fondo: #fbf0dc;
+  --ambar-borde: #f0dbb0;
+  --rojo: #b03a2e;
+
+  /* Superficies */
+  --fondo-app: #eef1f5;
+  --superficie: #ffffff;
+  --borde-1: #e4e8ef;
+  --borde-2: #d8dee7;
+  --borde-3: #d3dae4;
+
+  /* Texto */
+  --texto-titulo: #16233f;
+  --texto-secundario: #6b7480;
+  --texto-tenue: #8b93a1;
+  --texto-placeholder: #c3cad5;
+
+  --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  --radio-tarjeta: 16px;
+  --radio-boton: 13px;
+  --radio-chip: 20px;
+
+  --sombra-tarjeta: 0 2px 8px rgba(22, 35, 63, 0.05);
+  --sombra-cta: 0 8px 20px rgba(238, 107, 30, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--fondo-app);
+  color: var(--texto-titulo);
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: var(--naranjo);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--naranjo-hover);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-sans);
+}
+
+button {
+  min-height: 44px;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+@keyframes hkpop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hkcheck {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.app-shell {
+  max-width: 440px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--fondo-app);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+@media (min-width: 480px) {
+  .app-shell {
+    min-height: 100vh;
+    box-shadow: 0 0 40px rgba(22, 35, 63, 0.08);
+  }
+}

@@ -1,0 +1,22 @@
+# Dependencias
+node_modules/
+**/node_modules/
+
+# Build
+dist/
+**/dist/
+dist-ssr/
+
+# Variables de entorno (NUNCA subir credenciales)
+.env
+.env.local
+**/.env
+**/.env.local
+*.local
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Config local de Claude Code
+.claude/
