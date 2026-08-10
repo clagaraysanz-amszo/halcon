@@ -18,7 +18,16 @@ export default function Login() {
     setLoading(true);
     const { error } = await signInWithPassword(email.trim(), password);
     setLoading(false);
-    if (error) setError('Correo o contraseña incorrectos.');
+    if (error) {
+      const raw = error.message || '';
+      if (/email not confirmed/i.test(raw)) {
+        setError('El usuario existe pero el correo no está confirmado. En Supabase, recrea el usuario marcando "Auto Confirm User".');
+      } else if (/invalid login credentials/i.test(raw)) {
+        setError('Correo o contraseña incorrectos.');
+      } else {
+        setError(raw || 'No se pudo iniciar sesión. Intenta nuevamente.');
+      }
+    }
   }
 
   return (
