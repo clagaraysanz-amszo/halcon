@@ -100,6 +100,20 @@ export default function RegistroVuelo() {
           </div>
         )}
 
+        {esOtroVuelo && !esFarellones && (
+          <div>
+            <label className="field-label">Lugar / Dirección</label>
+            <input
+              type="text"
+              className="field-select"
+              value={form.ubicacionManual}
+              onChange={(e) => setField('ubicacionManual', e.target.value)}
+              placeholder="Ej: Av. Las Condes 12345, esquina Los Militares…"
+              style={{ width: '100%', boxSizing: 'border-box' }}
+            />
+          </div>
+        )}
+
         <div>
           <label className="field-label">Altura de vuelo</label>
           <div className="field-wrap">
