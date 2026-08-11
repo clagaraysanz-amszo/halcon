@@ -46,7 +46,7 @@ export default function Confirmacion() {
       setLastFlight({ ...inserted, nombre: esTramo ? selectedTramo.nombre : selectedTipoVuelo });
       navigate('/registro/exito');
     } catch (e) {
-      setError('No se pudo guardar el registro. Intenta nuevamente.');
+      setError(e.message || 'No se pudo guardar el registro. Intenta nuevamente.');
       setSaving(false);
     }
   }
