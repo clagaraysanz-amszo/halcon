@@ -182,6 +182,8 @@ export default function CargarPDO() {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [textoPegado, setTextoPegado] = useState('');
+  const [mostrarPegar, setMostrarPegar] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -468,6 +470,51 @@ export default function CargarPDO() {
             />
           </label>
 
+          {/* Alternativa: pegar texto. Necesaria porque en algunos Xiaomi/MIUI
+              el selector de archivos no devuelve el archivo a Chrome (lo abre
+              en WPS Office o mata el tab). El supervisor copia el contenido
+              del Excel y lo pega aquí directamente. */}
+          <button
+            type="button"
+            onClick={() => setMostrarPegar((v) => !v)}
+            style={{ marginTop: 10, background: 'transparent', border: 'none', color: 'var(--azul)', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+          >
+            {mostrarPegar ? '↑ Ocultar opción de pegar texto' : '¿No sube desde el celular? Pegar texto en su lugar ↓'}
+          </button>
+
+          {mostrarPegar && (
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', marginBottom: 6, lineHeight: 1.4 }}>
+                Abre el Excel del PDO, selecciona todo (Ctrl+A o "Seleccionar todo") y copia. Pega aquí y toca <strong>Interpretar</strong>.
+              </div>
+              <textarea
+                value={textoPegado}
+                onChange={(e) => setTextoPegado(e.target.value)}
+                placeholder="Pega aquí el contenido del PDO…"
+                rows={6}
+                style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--fondo-app)', fontSize: 11, fontFamily: 'monospace', boxSizing: 'border-box', resize: 'vertical' }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (!textoPegado.trim()) {
+                    setError('Pega el contenido del PDO antes de interpretar.');
+                    return;
+                  }
+                  setSuccess('');
+                  setResumen(null);
+                  setError('');
+                  setFileName('(texto pegado)');
+                  procesarTextoPdo(textoPegado, fecha);
+                }}
+                className="btn btn-outline"
+                style={{ width: '100%', marginTop: 8 }}
+              >
+                Interpretar texto pegado
+              </button>
+            </div>
+          )}
+
           {resumen && (
             <div style={{ marginTop: 12, borderTop: '1px solid var(--fondo-app)', paddingTop: 11 }}>
               <div style={{ fontSize: 11.5, color: 'var(--texto-secundario)', marginBottom: 8 }}>
@@ -516,7 +563,12 @@ export default function CargarPDO() {
           </div>
         )}
 
-        {error && <div style={{ color: 'var(--rojo)', fontSize: 12.5, fontWeight: 600 }}>{error}</div>}
+        {error && (
+          <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '11px 13px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <span style={{ fontSize: 18, flex: 'none', lineHeight: 1 }}>⚠️</span>
+            <div style={{ flex: 1, color: '#B91C1C', fontSize: 12.5, fontWeight: 600, lineHeight: 1.45 }}>{error}</div>
+          </div>
+        )}
         {success && (
           <div className="card" style={{ background: 'var(--verde-fondo-2)', borderColor: 'var(--verde-borde)', padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 11 }}>
             <span style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--verde-ok)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flex: 'none' }}>
