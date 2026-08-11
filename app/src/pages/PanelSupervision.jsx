@@ -109,8 +109,7 @@ export default function PanelSupervision() {
           </div>
           <button
             onClick={() => setFecha(addDaysStr(fecha, 1))}
-            disabled={fecha >= hoy}
-            style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: fecha >= hoy ? 'rgba(255,255,255,.2)' : '#fff', fontSize: 18, fontWeight: 700, cursor: fecha >= hoy ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 18, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             ›
           </button>
