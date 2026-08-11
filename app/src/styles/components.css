@@ -147,6 +147,10 @@
   background: var(--verde-fondo);
   color: var(--verde-ok);
 }
+.badge--noreal {
+  background: #FFF5F5;
+  color: #E53E3E;
+}
 .badge--neutral {
   background: #eef2f8;
   color: var(--texto-tenue);

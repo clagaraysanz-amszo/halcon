@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { fechaOperativaHoy } from '../lib/turnos';
+import { fechaOperativaHoy, compararHoraTurno } from '../lib/turnos';
 import { capturarUbicacion } from '../lib/geo';
 
 /**
@@ -35,7 +35,12 @@ export function useOperatorDay(halconN) {
     if (pdoRes.error) setError(pdoRes.error);
     else if (flightsRes.error) setError(flightsRes.error);
     else setError(null);
-    setPdoRows(pdoRes.data ?? []);
+    const pdo = pdoRes.data ?? [];
+    const turnoDetected = pdo[0]?.turno ?? null;
+    if (turnoDetected === 'N') {
+      pdo.sort((a, b) => compararHoraTurno(a.hora, b.hora, 'N'));
+    }
+    setPdoRows(pdo);
     setFlights(flightsRes.data ?? []);
     setLoading(false);
   }, [halconN, fecha]);
@@ -87,6 +92,15 @@ export function useOperatorDay(halconN) {
     return inserted;
   }
 
+  async function markNoRealizado(pdoRow, motivo) {
+    const { error: updateError } = await supabase
+      .from('pdo_dia')
+      .update({ estado: 'No realizado', motivo: motivo || null })
+      .eq('id', pdoRow.id);
+    if (updateError) throw updateError;
+    await refetch();
+  }
+
   const pdoPend = pdoRows.filter((r) => r.estado === 'Pendiente').length;
   const pdoDone = pdoRows.length - pdoPend;
   const turno = pdoRows[0]?.turno ?? null;
@@ -106,6 +120,7 @@ export function useOperatorDay(halconN) {
     vuelosHoy: flights.length,
     realizadosCount,
     confirmFlight,
+    markNoRealizado,
     refetch,
   };
 }

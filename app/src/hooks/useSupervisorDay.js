@@ -1,15 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { fechaOperativaHoy } from '../lib/turnos';
+import { fechaOperativaHoy, compararHoraTurno } from '../lib/turnos';
 
-/**
- * Datos del día operativo para el Panel de Supervisión: PDO de hoy
- * (todos los turnos) y vuelos registrados hoy (todos los operadores).
- * Solo funcionarios que figuran en el PDO de hoy participan en las
- * métricas (README §5.7).
- */
-export function useSupervisorDay() {
-  const fecha = fechaOperativaHoy();
+export function useSupervisorDay(fechaOverride) {
+  const fecha = fechaOverride || fechaOperativaHoy();
   const [pdoRows, setPdoRows] = useState([]);
   const [flights, setFlights] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +22,13 @@ export function useSupervisorDay() {
     if (pdoRes.error) setError(pdoRes.error);
     else if (flightsRes.error) setError(flightsRes.error);
     else setError(null);
-    setPdoRows(pdoRes.data ?? []);
+
+    const pdo = pdoRes.data ?? [];
+    const turnosPorOp = new Map();
+    pdo.forEach((r) => turnosPorOp.set(r.halcon_n, r.turno));
+    pdo.sort((a, b) => compararHoraTurno(a.hora, b.hora, a.turno));
+
+    setPdoRows(pdo);
     setFlights(flightsRes.data ?? []);
     setLoading(false);
   }, [fecha]);

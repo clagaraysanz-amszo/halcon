@@ -1,0 +1,150 @@
+========================================================================
+ HALCÓN — App de Gestión Operativa de Drones
+ Sección Drone Halcón · Departamento de Drone · AMSZO
+ Municipalidad de Lo Barnechea
+ ------------------------------------------------------------------------
+ Archivo de referencia. Guárdalo. Aquí está todo lo que necesitas saber
+ para usar, mantener y crecer la app, sin depender de ningún chat.
+========================================================================
+
+
+1) ACCESOS RÁPIDOS
+------------------------------------------------------------------------
+ • App (para todos):   https://halcon-iota.vercel.app
+ • Base de datos:      https://supabase.com  → proyecto "hegsnshxceovbohzdnyv"
+ • Código (GitHub):    https://github.com/clagaraysanz-amszo/halcon
+ • Hosting (Vercel):   https://vercel.com  → proyecto "halcon"
+ • Carpeta local:      C:\Users\cgaray\Desktop\design_handoff_halcon
+
+
+2) QUIÉNES ENTRAN Y CÓMO
+------------------------------------------------------------------------
+ OPERADORES (Halcón 1 a 7):
+   - Abren la app y TOCAN su número. Sin contraseña.
+   - Ven solo SUS vuelos del día. Si no están en el PDO -> "Día libre".
+
+ SUPERVISORES:
+   - Entran por "Entrar como Supervisor" con correo + contraseña.
+   - S23 · Claudio Garay  · cgaray@amszo.cl
+   - S4  · Ignacio Vidal  · ividal@amszo.cl
+   - Ven TODO: cargar PDO, panel de cumplimiento, avance, GPS, etc.
+
+
+3) USO DIARIO DEL SUPERVISOR — CARGAR EL PDO
+------------------------------------------------------------------------
+ 1. Entrar como Supervisor.
+ 2. Panel -> "PDO del día" -> "Cargar PDO".
+ 3. "Subir PDO del día" -> elegir el archivo EXCEL del PDO (.xlsx).
+ 4. La app lee sola: la FECHA (del archivo), y cada Operador Drone con su
+    TURNO (según la hora) y sus vuelos. Revisa el resumen.
+ 5. "Confirmar y distribuir PDO".
+
+ NOTAS:
+   - Se puede subir en CUALQUIER momento; la fecha la toma del archivo.
+   - Un solo PDO cubre los 3 turnos, incluida la madrugada del turno noche
+     (el día operativo cambia a las 07:00, no a medianoche).
+   - Quien no aparezca en el PDO queda con día libre automáticamente.
+
+
+4) USO DEL OPERADOR — REGISTRAR UN VUELO
+------------------------------------------------------------------------
+ 1. Abrir app -> tocar su Halcón.
+ 2. "Realizar Tramo" o entrar a sus vuelos asignados -> elegir el tramo.
+ 3. Completar altura, minutos, aeronave, tipificación, estado.
+ 4. Permitir UBICACIÓN (GPS) la primera vez -> queda la posición del vuelo.
+ 5. "Confirmar". El supervisor lo ve al instante.
+ 6. Al terminar el turno: "Cerrar Sesión" (importante en equipo compartido).
+
+
+5) INSTALAR LA APP EN UN TELÉFONO (PWA)
+------------------------------------------------------------------------
+ Android (Chrome): abrir halcon-iota.vercel.app -> menú (⋮) ->
+                   "Instalar aplicación".
+ iPhone (Safari):  abrir halcon-iota.vercel.app -> Compartir ->
+                   "Agregar a pantalla de inicio".
+
+
+6) TAREAS DE ADMINISTRACIÓN (en Supabase)
+------------------------------------------------------------------------
+ Todo esto se hace en supabase.com -> tu proyecto.
+
+ A) CAMBIAR EL CORREO DE UN OPERADOR/SUPERVISOR
+    SQL Editor -> New snippet -> Run (ejemplo):
+       update public.operadores set email = 'nuevo@amszo.cl'
+       where halcon_n = '3';
+    OJO: el correo debe coincidir EXACTO con el usuario de Auth.
+
+ B) AGREGAR / RECREAR EL USUARIO DE LOGIN
+    Authentication -> Users -> Add user -> "Create new user"
+    (NUNCA "Invite", da error de límite de correos).
+      - Email: el mismo que quedó en la tabla operadores.
+      - Password:
+          * Operadores (Halcón 1-7): DEBE ser  HalconLB-2026
+          * Supervisores: la que definas para cada uno.
+      - Marcar "Auto Confirm User" -> Create user.
+
+ C) VER LOS OPERADORES CARGADOS
+    Table Editor -> tabla "operadores".
+
+ D) BORRAR EL PDO DE UNA FECHA (si te equivocaste)
+    SQL Editor:
+       delete from public.pdo_dia where fecha = '2026-08-10';
+
+
+7) CLAVE COMPARTIDA DE LOS OPERADORES
+------------------------------------------------------------------------
+ Los 7 operadores usan por debajo una clave interna compartida:
+       HalconLB-2026
+ El operador NUNCA la escribe (solo toca su número), pero al crear sus
+ usuarios en Auth debe ser EXACTAMENTE esa.
+ Si algún día se quiere cambiar: hay que cambiarla en el código
+ (app/src/pages/Login.jsx, constante CLAVE_OPERADOR) Y en los 7 usuarios
+ de Auth a la vez. (Pídelo y se hace en minutos.)
+
+
+8) COSTOS
+------------------------------------------------------------------------
+ • Gratis para este uso. Ni Supabase ni Vercel cobran solos.
+ • Supabase gratis pausa un proyecto tras 7 días SIN uso -> como se usa
+   a diario, no se pausa (y si pasara, se reactiva con un clic).
+ • Único costo opcional: un dominio .cl propio (~$10.000/año). No hace falta.
+
+
+9) ACTUALIZAR LA APP (para quien mantenga el código)
+------------------------------------------------------------------------
+ - El código está en la carpeta local y en GitHub.
+ - Cambios: editar en app\  ->  en PowerShell, dentro de la carpeta:
+       git add -A
+       git commit -m "descripcion del cambio"
+       git push
+ - Al hacer "git push", Vercel redespliega SOLO en ~1-2 min (misma URL).
+ - En el teléfono, si no ves los cambios: recargar (o cerrar y reabrir).
+
+
+10) PROBLEMAS COMUNES
+------------------------------------------------------------------------
+ • "Correo o contraseña incorrectos" (supervisor):
+     -> el usuario de Auth no existe o la clave no coincide. Recrear con
+        "Create new user" + Auto Confirm.
+ • Un Halcón entra pero ve "Día libre" cuando debería tener vuelos:
+     -> el PDO de esa fecha no se cargó, o la fecha del PDO no coincide
+        con el día. Revisar en "Cargar PDO" la fecha y volver a subir.
+ • La app se ve "vieja" tras un cambio:
+     -> es la caché. Recargar la página (o cerrar y reabrir la app).
+ • Al subir el PDO no detecta a alguien:
+     -> revisar que el nombre del funcionario aparezca junto a su línea
+        "SOBREVUELOS: ... SECTOR N" en el Excel.
+
+
+11) ARCHIVOS ÚTILES EN ESTA CARPETA
+------------------------------------------------------------------------
+ • INSTRUCCIONES_HALCON.html      -> guía para operadores (imprimible)
+ • INSTRUCCIONES_SUPERVISOR.html  -> guía para supervisores (imprimible)
+ • GUIA_DESPLIEGUE.md             -> pasos técnicos de instalación
+ • README.md                      -> especificación completa del sistema
+ • sql\                           -> scripts de la base de datos
+ • app\                           -> código de la aplicación
+
+========================================================================
+ Última actualización: 10 de agosto de 2026
+========================================================================

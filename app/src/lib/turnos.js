@@ -52,3 +52,16 @@ export function formatFechaCorta(date = new Date()) {
 export function formatHoraActual(date = new Date()) {
   return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
 }
+
+/**
+ * Compara dos filas de PDO por hora, respetando el orden real del turno noche
+ * (22:xx → 23:xx → 00:xx → … → 06:xx).
+ */
+export function compararHoraTurno(horaA, horaB, turno) {
+  const toMin = (h) => {
+    const [hh, mm] = h.split(':').map(Number);
+    if (turno === 'N' && hh < 7) return (hh + 24) * 60 + mm;
+    return hh * 60 + mm;
+  };
+  return toMin(horaA) - toMin(horaB);
+}
