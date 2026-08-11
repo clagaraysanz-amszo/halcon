@@ -14,7 +14,7 @@ insert into public.operadores (halcon_n, nombre, rol, email) values
   ('5',   'Sebastián Castillo', 'Operador',   'halcon5@amszo.cl'),
   ('6',   'Miguel Gallardo',    'Operador',   'halcon6@amszo.cl'),
   ('7',   'Juan Gutiérrez',     'Operador',   'halcon7@amszo.cl'),
-  ('S4',  'Ignacio Vidal',      'Supervisor', 'ividal@lobarnechea.cl'),
+  ('S4',  'Ignacio Vidal',      'Supervisor', 'ividal@amszo.cl'),
   ('S23', 'Claudio Garay',      'Supervisor', 'cgaray@amszo.cl')
 on conflict (halcon_n) do update set
   nombre = excluded.nombre,
