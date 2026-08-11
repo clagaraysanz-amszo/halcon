@@ -18,6 +18,7 @@ export default function Confirmacion() {
   const summary = [
     { k: 'Altura de vuelo', v: form.altura || '—' },
     { k: 'Duración', v: `${form.minutos} minutos` },
+    { k: 'Distancia recorrida', v: form.distancia || '—' },
     { k: 'Aeronave', v: form.aeronave },
     { k: 'Tipificación', v: form.tipificacion },
     { k: 'Cuadrante', v: selectedTramo.cuadrante },

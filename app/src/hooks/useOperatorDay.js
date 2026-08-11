@@ -66,6 +66,7 @@ export function useOperatorDay(halconN) {
         tramo_n: tramoN,
         altura: form.altura,
         minutos: form.minutos,
+        distancia: form.distancia || null,
         aeronave: form.aeronave,
         tipificacion: form.tipificacion,
         estado: form.estado,

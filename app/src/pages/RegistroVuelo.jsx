@@ -5,6 +5,7 @@ import { formatFechaCorta } from '../lib/turnos';
 import ScreenHeader from '../components/ScreenHeader';
 
 const ALTURAS = ['60 metros', '70 metros', '80 metros', '90 metros', '100 metros', '110 metros', '120 metros', '200 metros', '300 metros', '400 metros', '500 metros', '600 metros'];
+const DISTANCIAS = ['100 metros', '200 metros', '300 metros', '400 metros', '500 metros', '600 metros', '700 metros', '800 metros', '900 metros', '1000 metros'];
 const AERONAVES = ['DUAL', 'AUTEL', '3TD', 'MATRICE 300', 'AIR 2'];
 const TIPIFICACIONES = ['Paneo Preventivo', 'Paneo Focalizado', 'Informe Situacional', 'Monitoreo Preventivo', 'Constancia de Servicio'];
 const ESTADOS = ['Realizado', 'Interrumpido', 'Reprogramado'];
@@ -16,7 +17,7 @@ export default function RegistroVuelo() {
 
   if (!selectedTramo) return <Navigate to="/tramos" replace />;
 
-  const puedeContinuar = form.altura && form.minutos > 0 && form.aeronave && form.tipificacion && form.estado;
+  const puedeContinuar = form.altura && form.minutos > 0 && form.distancia && form.aeronave && form.tipificacion && form.estado;
 
   return (
     <div className="screen">
@@ -66,6 +67,20 @@ export default function RegistroVuelo() {
             <button className="stepper-btn stepper-btn--inc" onClick={() => setField('minutos', form.minutos + 5)}>
               +
             </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="field-label">Distancia recorrida</label>
+          <div className="field-wrap">
+            <select className="field-select" value={form.distancia} onChange={(e) => setField('distancia', e.target.value)}>
+              {DISTANCIAS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+            <span className="field-caret">▼</span>
           </div>
         </div>
 

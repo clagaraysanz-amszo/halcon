@@ -19,7 +19,7 @@ export function descargarBitacora(flights, pdoRows, fecha, tramosByN, operadores
       Cuadrante: tramo?.cuadrante || '—',
       'Duracion Vuelo': `${f.minutos} minutos`,
       'Altura  Metros': `${f.altura} metros`,
-      'Distancia Recorrida': '—',
+      'Distancia Recorrida': f.distancia || '—',
       FUNCIONARIO: op?.nombre || `Halcón ${f.halcon_n}`,
     };
   });
