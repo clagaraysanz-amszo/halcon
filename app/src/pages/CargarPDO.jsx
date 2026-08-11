@@ -157,7 +157,21 @@ export default function CargarPDO() {
   const navigate = useNavigate();
   const { operadores, tramosByN, operadoresByHalcon } = useCatalog();
 
-  const [fecha, setFecha] = useState(fechaOperativaHoy());
+  // Persiste la fecha en localStorage: en algunos Android (Xiaomi/MIUI) Chrome
+  // mata el tab al abrir el selector de archivos y al volver el estado se
+  // resetea. Con localStorage la fecha elegida sobrevive.
+  const [fecha, setFechaRaw] = useState(() => {
+    try {
+      const saved = localStorage.getItem('cargarPDO.fecha');
+      return saved || fechaOperativaHoy();
+    } catch {
+      return fechaOperativaHoy();
+    }
+  });
+  const setFecha = (f) => {
+    setFechaRaw(f);
+    try { localStorage.setItem('cargarPDO.fecha', f); } catch {}
+  };
   const [fileName, setFileName] = useState('');
   const [reading, setReading] = useState(false);
   const [resumen, setResumen] = useState(null);
@@ -244,23 +258,11 @@ export default function CargarPDO() {
     reader.onload = () => {
       try {
         const texto = excelATexto(reader.result);
-        // Fecha detectada del contenido o del nombre del archivo.
-        const detectada = fechaDesdeTexto(texto) || fechaDesdeNombre(file.name);
-        let fechaUsar = fecha; // por defecto, la fecha manualmente seleccionada
-        if (detectada && detectada !== fecha) {
-          // El Excel dice una fecha distinta a la elegida por el supervisor.
-          // Pregunta cuál usar en vez de sobrescribir silenciosamente.
-          const usarDetectada = window.confirm(
-            `El Excel indica que corresponde al ${detectada}, pero tú seleccionaste ${fecha}.\n\n` +
-              `¿Guardar el PDO en la fecha ${detectada} (la del Excel)?\n\n` +
-              `Aceptar = usar ${detectada}\nCancelar = mantener ${fecha}`
-          );
-          if (usarDetectada) {
-            fechaUsar = detectada;
-            setFecha(detectada);
-          }
-        }
-        procesarTextoPdo(texto, fechaUsar);
+        // La fecha SIEMPRE es la seleccionada manualmente por el supervisor.
+        // No auto-detectamos del Excel/nombre para evitar sobreescribir la
+        // selección (causaba confusión en móvil: el usuario elegía 12/08 pero
+        // el Excel tenía otra fecha y se guardaba en la fecha incorrecta).
+        procesarTextoPdo(texto, fecha);
       } catch {
         setError('No se pudo leer el archivo. Sube el PDO en formato Excel (.xlsx o .xls).');
       } finally {
