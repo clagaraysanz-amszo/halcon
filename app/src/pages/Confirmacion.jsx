@@ -30,7 +30,13 @@ export default function Confirmacion() {
     setSaving(true);
     setError('');
     try {
-      const inserted = await day.confirmFlight({ tramoN: selectedTramo.tramo_n, form, pdoRow: selectedPdo });
+      const inserted = await day.confirmFlight({
+        tramoN: selectedTramo.tramo_n,
+        form,
+        pdoRow: selectedPdo,
+        tramoInfo: selectedTramo,
+        operadorNombre: operador.nombre,
+      });
       setLastFlight({ ...inserted, nombre: selectedTramo.nombre });
       navigate('/registro/exito');
     } catch (e) {

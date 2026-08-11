@@ -53,7 +53,7 @@ export function useOperatorDay(halconN) {
    * Confirma un vuelo: inserta en registro_vuelos y, si vino de una
    * asignación del PDO, marca esa fila como 'Realizado' (README §5.3).
    */
-  async function confirmFlight({ tramoN, form, pdoRow }) {
+  async function confirmFlight({ tramoN, form, pdoRow, tramoInfo, operadorNombre }) {
     // Captura de GPS silenciosa (README §7). No bloquea el guardado: si el
     // operador niega el permiso o no hay señal, `ubic` es null y se guarda igual.
     const ubic = await capturarUbicacion();
@@ -80,6 +80,28 @@ export function useOperatorDay(halconN) {
       .single();
 
     if (insertError) throw insertError;
+
+    // Enviar a OneDrive en segundo plano (no bloquea el guardado)
+    try {
+      fetch('/api/onedrive/append', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          Fecha: fecha,
+          Operador: `Halcón ${halconN}`,
+          'Modelo De RPA': form.aeronave,
+          Turno: pdoRow?.turno || '—',
+          Tipificacion: form.tipificacion,
+          Tramo: tramoN ? 'SI' : 'NO',
+          Ubicacion: tramoInfo?.nombre || '—',
+          Cuadrante: tramoInfo?.cuadrante || '—',
+          'Duracion Vuelo': `${form.minutos} minutos`,
+          'Altura Metros': form.altura,
+          'Distancia Recorrida': form.distancia || '—',
+          Funcionario: operadorNombre || '—',
+        }),
+      }).catch(() => {});
+    } catch (_) {}
 
     if (pdoRow) {
       const { error: updateError } = await supabase
