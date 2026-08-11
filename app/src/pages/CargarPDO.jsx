@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { supabase } from '../lib/supabaseClient';
 import { useCatalog } from '../context/CatalogContext';
-import { fechaOperativaHoy, TURNOS } from '../lib/turnos';
+import { fechaOperativaHoy, TURNOS, toISODate, formatFechaCorta } from '../lib/turnos';
 import ScreenHeader from '../components/ScreenHeader';
 
 const TURNO_OPTS = ['A', 'B', 'N'];
@@ -313,7 +313,45 @@ export default function CargarPDO() {
 
         <div>
           <label className="field-label">Fecha operativa del PDO</label>
-          <input type="date" className="field-input" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              type="button"
+              onClick={() => {
+                const d = new Date(fecha);
+                d.setDate(d.getDate() - 1);
+                setFecha(toISODate(d));
+              }}
+              style={{ width: 44, height: 44, flex: 'none', borderRadius: 10, border: '1px solid var(--fondo-app)', background: '#fff', color: 'var(--texto-titulo)', fontSize: 20, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              aria-label="Día anterior"
+            >
+              ‹
+            </button>
+            <div style={{ flex: 1, textAlign: 'center', background: '#fff', border: '1px solid var(--fondo-app)', borderRadius: 10, padding: '8px 10px' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--texto-titulo)' }}>
+                {formatFechaCorta(new Date(fecha + 'T12:00:00'))}
+              </div>
+              <div style={{ fontSize: 10.5, color: 'var(--texto-tenue)', fontWeight: 600, marginTop: 1 }}>{fecha}</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const d = new Date(fecha);
+                d.setDate(d.getDate() + 1);
+                setFecha(toISODate(d));
+              }}
+              style={{ width: 44, height: 44, flex: 'none', borderRadius: 10, border: '1px solid var(--fondo-app)', background: '#fff', color: 'var(--texto-titulo)', fontSize: 20, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              aria-label="Día siguiente"
+            >
+              ›
+            </button>
+          </div>
+          <input
+            type="date"
+            className="field-input"
+            value={fecha}
+            onChange={(e) => e.target.value && setFecha(e.target.value)}
+            style={{ marginTop: 6, fontSize: 12 }}
+          />
         </div>
 
         {existing.length > 0 && !success && (
