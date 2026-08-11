@@ -8,6 +8,20 @@ import ScreenHeader from '../components/ScreenHeader';
 
 const TURNO_OPTS = ['A', 'B', 'N'];
 
+/** Parse 'YYYY-MM-DD' como fecha LOCAL (evita el bug de UTC que corre el día
+ *  hacia atrás en zonas horarias negativas como Chile UTC-4). */
+function parseISODate(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/** Suma N días a una fecha ISO manteniendo hora local. */
+function addDaysISO(iso, days) {
+  const d = parseISODate(iso);
+  d.setDate(d.getDate() + days);
+  return toISODate(d);
+}
+
 /** Extrae todo el texto de un Excel (todas las hojas, fila por fila) para que
  *  interpretarPDO pueda buscar los operadores de dron y sus sobrevuelos. */
 function excelATexto(arrayBuffer) {
@@ -230,12 +244,22 @@ export default function CargarPDO() {
     reader.onload = () => {
       try {
         const texto = excelATexto(reader.result);
-        // Fecha del PDO: primero desde el contenido, luego desde el nombre del
-        // archivo, y si no, la fecha operativa por defecto. El supervisor puede
-        // corregirla en el campo "Fecha operativa".
+        // Fecha detectada del contenido o del nombre del archivo.
         const detectada = fechaDesdeTexto(texto) || fechaDesdeNombre(file.name);
-        const fechaUsar = detectada || fecha;
-        if (detectada) setFecha(detectada);
+        let fechaUsar = fecha; // por defecto, la fecha manualmente seleccionada
+        if (detectada && detectada !== fecha) {
+          // El Excel dice una fecha distinta a la elegida por el supervisor.
+          // Pregunta cuál usar en vez de sobrescribir silenciosamente.
+          const usarDetectada = window.confirm(
+            `El Excel indica que corresponde al ${detectada}, pero tú seleccionaste ${fecha}.\n\n` +
+              `¿Guardar el PDO en la fecha ${detectada} (la del Excel)?\n\n` +
+              `Aceptar = usar ${detectada}\nCancelar = mantener ${fecha}`
+          );
+          if (usarDetectada) {
+            fechaUsar = detectada;
+            setFecha(detectada);
+          }
+        }
         procesarTextoPdo(texto, fechaUsar);
       } catch {
         setError('No se pudo leer el archivo. Sube el PDO en formato Excel (.xlsx o .xls).');
@@ -316,11 +340,7 @@ export default function CargarPDO() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
               type="button"
-              onClick={() => {
-                const d = new Date(fecha);
-                d.setDate(d.getDate() - 1);
-                setFecha(toISODate(d));
-              }}
+              onClick={() => setFecha(addDaysISO(fecha, -1))}
               style={{ width: 44, height: 44, flex: 'none', borderRadius: 10, border: '1px solid var(--fondo-app)', background: '#fff', color: 'var(--texto-titulo)', fontSize: 20, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               aria-label="Día anterior"
             >
@@ -328,17 +348,13 @@ export default function CargarPDO() {
             </button>
             <div style={{ flex: 1, textAlign: 'center', background: '#fff', border: '1px solid var(--fondo-app)', borderRadius: 10, padding: '8px 10px' }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--texto-titulo)' }}>
-                {formatFechaCorta(new Date(fecha + 'T12:00:00'))}
+                {formatFechaCorta(parseISODate(fecha))}
               </div>
               <div style={{ fontSize: 10.5, color: 'var(--texto-tenue)', fontWeight: 600, marginTop: 1 }}>{fecha}</div>
             </div>
             <button
               type="button"
-              onClick={() => {
-                const d = new Date(fecha);
-                d.setDate(d.getDate() + 1);
-                setFecha(toISODate(d));
-              }}
+              onClick={() => setFecha(addDaysISO(fecha, 1))}
               style={{ width: 44, height: 44, flex: 'none', borderRadius: 10, border: '1px solid var(--fondo-app)', background: '#fff', color: 'var(--texto-titulo)', fontSize: 20, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               aria-label="Día siguiente"
             >
