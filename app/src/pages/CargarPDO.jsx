@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import { supabase } from '../lib/supabaseClient';
 import { useCatalog } from '../context/CatalogContext';
 import { fechaOperativaHoy, TURNOS } from '../lib/turnos';
@@ -7,46 +8,19 @@ import ScreenHeader from '../components/ScreenHeader';
 
 const TURNO_OPTS = ['A', 'B', 'N'];
 
-function blankDraft() {
-  return { turno: 'A', halconN: '', tramoN: '', hora: '' };
-}
-
-/**
- * Parsea el CSV de datos/PDO_Dia_ejemplo.csv: Fecha,Turno,HalconN,TramoN,Hora
- * Valida cada fila y descarta las inválidas. Si el archivo es binario (p.ej.
- * subieron un .xlsx en vez de un .csv), lanza 'BINARIO'.
- * Devuelve { rows, invalid }.
- */
-function parsePdoCsv(text) {
-  // Bytes de control (excepto tab/CR/LF) => no es texto CSV, es un binario.
-  if (/[\x00-\x08\x0E-\x1F]/.test(text.slice(0, 4000))) {
-    throw new Error('BINARIO');
-  }
-  const lines = text.trim().split(/\r?\n/);
-  const rows = [];
-  let invalid = 0;
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    const cols = line.split(',').map((c) => c.trim().replace(/^"|"$/g, ''));
-    if ((cols[0] || '').toLowerCase() === 'fecha') continue; // encabezado
-    const [fecha, turno, halconN, tramoN, hora] = cols;
-    const tramoNum = Number(tramoN);
-    const valida =
-      /^\d{4}-\d{2}-\d{2}$/.test(fecha || '') &&
-      ['A', 'B', 'N'].includes((turno || '').toUpperCase()) &&
-      !!halconN &&
-      Number.isInteger(tramoNum) &&
-      tramoNum >= 1 &&
-      tramoNum <= 69 &&
-      /^\d{1,2}:\d{2}$/.test(hora || '');
-    if (!valida) {
-      invalid++;
-      continue;
+/** Extrae todo el texto de un Excel (todas las hojas, fila por fila) para que
+ *  interpretarPDO pueda buscar los operadores de dron y sus sobrevuelos. */
+function excelATexto(arrayBuffer) {
+  const wb = XLSX.read(arrayBuffer, { type: 'array' });
+  const lineas = [];
+  for (const nombre of wb.SheetNames) {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[nombre], { header: 1, raw: false, defval: '' });
+    for (const r of rows) {
+      const linea = r.map((c) => String(c)).join(' ');
+      if (linea.trim()) lineas.push(linea);
     }
-    rows.push({ fecha, turno: turno.toUpperCase(), halcon_n: halconN, tramo_n: tramoNum, hora });
   }
-  return { rows, invalid };
+  return lineas.join('\n');
 }
 
 /**
@@ -147,11 +121,10 @@ function interpretarPDO(text, operadores) {
 export default function CargarPDO() {
   const navigate = useNavigate();
   const { operadores, tramosByN, operadoresByHalcon } = useCatalog();
-  const operadoresOperativos = useMemo(() => operadores.filter((o) => o.rol === 'Operador'), [operadores]);
 
   const [fecha, setFecha] = useState(fechaOperativaHoy());
-  const [draft, setDraft] = useState(blankDraft());
-  const [pdoText, setPdoText] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [reading, setReading] = useState(false);
   const [resumen, setResumen] = useState(null);
   const [pending, setPending] = useState([]);
   const [existing, setExisting] = useState([]);
@@ -189,26 +162,15 @@ export default function CargarPDO() {
     });
   }, [existing]);
 
-  function addDraft() {
-    if (!draft.halconN || !draft.tramoN || !draft.hora) {
-      setError('Completa halcón, tramo y hora antes de agregar la fila.');
-      return;
-    }
-    setError('');
-    setPending((p) => [...p, { fecha, turno: draft.turno, halcon_n: draft.halconN, tramo_n: Number(draft.tramoN), hora: draft.hora }]);
-    setDraft((d) => ({ ...blankDraft(), turno: d.turno }));
-  }
-
   function removePending(idx) {
     setPending((p) => p.filter((_, i) => i !== idx));
   }
 
-  function interpretarPdoCompleto() {
-    setSuccess('');
-    const { asignaciones, noReconocidos } = interpretarPDO(pdoText, operadores);
+  function procesarTextoPdo(text) {
+    const { asignaciones, noReconocidos } = interpretarPDO(text, operadores);
     if (asignaciones.length === 0) {
       setResumen(null);
-      setError('No se detectó ningún operador de dron con sobrevuelos. Pega el PDO incluyendo las líneas "SOBREVUELOS: … SECTOR N".');
+      setError('No se detectó ningún operador de dron con sobrevuelos en el archivo. Revisa que el PDO incluya las líneas "SOBREVUELOS: … SECTOR N".');
       return;
     }
     const nuevas = [];
@@ -228,39 +190,39 @@ export default function CargarPDO() {
       detalle.push({ halcon_n: a.halcon_n, nombre: a.nombre, turno: turnos, count: n });
     }
     setPending((p) => [...p, ...nuevas]);
-    setPdoText('');
     setResumen({ detalle, noReconocidos, inexistentes: [...sectoresInexistentes] });
     setError('');
   }
 
-  function handleCsvFile(e) {
+  function handlePdoFile(e) {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    setSuccess('');
+    setResumen(null);
+    setError('');
+    setFileName(file.name);
+    setReading(true);
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const { rows, invalid } = parsePdoCsv(String(reader.result));
-        if (rows.length === 0) {
-          setError('No se encontraron filas válidas. El archivo debe ser un CSV de texto con columnas Fecha,Turno,HalconN,TramoN,Hora (no un Excel .xlsx).');
-          return;
-        }
-        setPending((p) => [...p, ...rows]);
-        setError(invalid > 0 ? `Se importaron ${rows.length} filas; se omitieron ${invalid} con formato inválido.` : '');
-      } catch (err) {
-        if (err.message === 'BINARIO') {
-          setError('Ese archivo no es un CSV de texto (parece un Excel .xlsx u otro binario). Guárdalo como CSV, o carga las filas manualmente con "+ Agregar fila".');
-        } else {
-          setError('No se pudo leer el archivo CSV. Verifica el formato (Fecha,Turno,HalconN,TramoN,Hora).');
-        }
+        procesarTextoPdo(excelATexto(reader.result));
+      } catch {
+        setError('No se pudo leer el archivo. Sube el PDO en formato Excel (.xlsx o .xls).');
+      } finally {
+        setReading(false);
       }
     };
-    reader.readAsText(file);
-    e.target.value = '';
+    reader.onerror = () => {
+      setError('No se pudo leer el archivo.');
+      setReading(false);
+    };
+    reader.readAsArrayBuffer(file);
   }
 
   async function confirmarYDistribuir() {
     if (pending.length === 0) {
-      setError('Agrega al menos una fila (manualmente o desde un CSV) antes de confirmar.');
+      setError('Sube el PDO (Excel) e interprétalo antes de confirmar.');
       return;
     }
     setSaving(true);
@@ -281,8 +243,8 @@ export default function CargarPDO() {
 
       <div className="content">
         <div style={{ fontSize: 13, color: 'var(--texto-secundario)', lineHeight: 1.5 }}>
-          Pega el PDO del día completo: la app detecta a cada operador de dron por su nombre, deduce su turno por la
-          hora de los sobrevuelos y le asigna sus vuelos. Quien no aparezca queda con día libre.
+          Sube el PDO del día (el archivo Excel): la app detecta a cada operador de dron por su nombre, deduce su turno
+          por la hora de los sobrevuelos y le asigna sus vuelos. Quien no aparezca queda con día libre.
         </div>
 
         <div>
@@ -291,20 +253,22 @@ export default function CargarPDO() {
         </div>
 
         <div className="card" style={{ padding: 15 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--texto-titulo)', marginBottom: 3 }}>Pegar PDO del día</div>
-          <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', marginBottom: 10, lineHeight: 1.45 }}>
-            Copia el PDO completo (los 3 turnos) y pégalo aquí. La app busca a cada <strong>Operador Drone</strong> por su nombre, deduce el turno por la hora e ignora lo que no sea sobrevuelo de sector.
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--texto-titulo)', marginBottom: 3 }}>Subir PDO del día</div>
+          <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', marginBottom: 12, lineHeight: 1.45 }}>
+            Sube el archivo Excel del PDO. La app lo lee, busca a cada <strong>Operador Drone</strong> por su nombre y le asigna sus sobrevuelos automáticamente.
           </div>
-          <textarea
-            className="field-textarea"
-            style={{ minHeight: 130, marginBottom: 8 }}
-            value={pdoText}
-            onChange={(e) => setPdoText(e.target.value)}
-            placeholder="Pega aquí el PDO del día completo (incluye las líneas 'Operador Drone …' y 'SOBREVUELOS: … SECTOR N …')"
-          />
-          <button onClick={interpretarPdoCompleto} className="btn btn-primary" style={{ width: '100%', height: 44 }}>
-            Interpretar PDO
-          </button>
+
+          <label
+            className="card"
+            style={{ border: '2px dashed var(--texto-placeholder)', background: reading ? '#FFF3EA' : '#F7F9FC', padding: '22px 16px', textAlign: 'center', cursor: reading ? 'default' : 'pointer', display: 'block', margin: 0 }}
+          >
+            <div style={{ fontSize: 30, marginBottom: 6 }}>📊</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--texto-titulo)' }}>
+              {reading ? 'Leyendo el archivo…' : fileName || 'Toca para subir el PDO (Excel)'}
+            </div>
+            <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', marginTop: 4 }}>Formatos .xlsx o .xls</div>
+            <input type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onChange={handlePdoFile} disabled={reading} style={{ display: 'none' }} />
+          </label>
 
           {resumen && (
             <div style={{ marginTop: 12, borderTop: '1px solid var(--fondo-app)', paddingTop: 11 }}>
@@ -329,46 +293,6 @@ export default function CargarPDO() {
             </div>
           )}
         </div>
-
-        <div className="card" style={{ padding: 15 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--texto-titulo)', marginBottom: 10 }}>Agregar fila manualmente</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-            <select className="field-select" style={{ height: 44 }} value={draft.turno} onChange={(e) => setDraft((d) => ({ ...d, turno: e.target.value }))}>
-              {TURNO_OPTS.map((t) => (
-                <option key={t} value={t}>
-                  Turno {t} · {TURNOS[t].label}
-                </option>
-              ))}
-            </select>
-            <select className="field-select" style={{ height: 44 }} value={draft.halconN} onChange={(e) => setDraft((d) => ({ ...d, halconN: e.target.value }))}>
-              <option value="">Halcón…</option>
-              {operadoresOperativos.map((o) => (
-                <option key={o.halcon_n} value={o.halcon_n}>
-                  Halcón {o.halcon_n} · {o.nombre}
-                </option>
-              ))}
-            </select>
-            <select className="field-select" style={{ height: 44 }} value={draft.tramoN} onChange={(e) => setDraft((d) => ({ ...d, tramoN: e.target.value }))}>
-              <option value="">Tramo…</option>
-              {[...tramosByN.values()].map((t) => (
-                <option key={t.tramo_n} value={t.tramo_n}>
-                  {t.tramo_n} · {t.nombre}
-                </option>
-              ))}
-            </select>
-            <input type="time" className="field-input" style={{ height: 44 }} value={draft.hora} onChange={(e) => setDraft((d) => ({ ...d, hora: e.target.value }))} />
-          </div>
-          <button onClick={addDraft} className="btn btn-outline" style={{ width: '100%', height: 44 }}>
-            + Agregar fila
-          </button>
-        </div>
-
-        <label className="card" style={{ border: '2px dashed var(--texto-placeholder)', background: '#F7F9FC', padding: '20px 16px', textAlign: 'center', cursor: 'pointer', display: 'block' }}>
-          <div style={{ fontSize: 30, marginBottom: 6 }}>📄</div>
-          <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--texto-titulo)' }}>O importar desde CSV</div>
-          <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', marginTop: 4 }}>Columnas: Fecha,Turno,HalconN,TramoN,Hora</div>
-          <input type="file" accept=".csv" onChange={handleCsvFile} style={{ display: 'none' }} />
-        </label>
 
         {pending.length > 0 && (
           <div className="card" style={{ padding: 15 }}>
