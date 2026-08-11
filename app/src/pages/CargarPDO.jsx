@@ -281,16 +281,34 @@ export default function CargarPDO() {
       setError('Sube el PDO (Excel) e interprétalo antes de confirmar.');
       return;
     }
+    // Sync inteligente: si ya hay filas en la BD para (halcon_n, tramo_n, hora)
+    // esa asignación ya existe (sea Pendiente o Realizado) y se omite. Solo se
+    // insertan las asignaciones que faltan. Esto permite re-subir el mismo PDO
+    // sin duplicar y sin reasignar vuelos ya realizados como Pendientes.
+    const existingKeys = new Set(existing.map((r) => `${r.halcon_n}|${r.tramo_n}|${r.hora}`));
+    const nuevas = pending.filter((r) => !existingKeys.has(`${r.halcon_n}|${r.tramo_n}|${r.hora}`));
+    const omitidas = pending.length - nuevas.length;
+
+    if (nuevas.length === 0) {
+      setPending([]);
+      setError(`Todas las ${pending.length} asignaciones del Excel ya están en el PDO de ${fecha}. No hay nada nuevo que agregar.`);
+      return;
+    }
+
     setSaving(true);
     setError('');
-    const { error } = await supabase.from('pdo_dia').insert(pending);
+    const { error } = await supabase.from('pdo_dia').insert(nuevas);
     setSaving(false);
     if (error) {
       setError('Error al guardar el PDO: ' + error.message);
       return;
     }
     setPending([]);
-    setSuccess(`PDO distribuido: ${pending.length} filas agregadas para ${fecha}.`);
+    setSuccess(
+      omitidas > 0
+        ? `PDO actualizado para ${fecha}: ${nuevas.length} filas nuevas agregadas. Se omitieron ${omitidas} asignaciones que ya existían (Realizadas o Pendientes).`
+        : `PDO distribuido: ${nuevas.length} filas agregadas para ${fecha}.`
+    );
   }
 
   async function borrarPDO() {
@@ -411,12 +429,12 @@ export default function CargarPDO() {
         </div>
 
         {existing.length > 0 && !success && (
-          <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-            <span style={{ fontSize: 20, flex: 'none', lineHeight: 1 }}>⚠️</span>
+          <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <span style={{ fontSize: 20, flex: 'none', lineHeight: 1 }}>ℹ️</span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#92400E' }}>Ya hay PDO cargado para {fecha}</div>
-              <div style={{ fontSize: 11.5, color: '#78350F', marginTop: 3, lineHeight: 1.45 }}>
-                {existing.length} sobrevuelos existentes. Si subes otro Excel se <strong>duplicarán</strong>. Si vas a reemplazar el PDO, bórralo primero con el botón de abajo.
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1E3A8A' }}>Ya hay PDO cargado para {fecha}</div>
+              <div style={{ fontSize: 11.5, color: '#1E40AF', marginTop: 3, lineHeight: 1.45 }}>
+                {existing.length} sobrevuelos existentes. Puedes <strong>volver a subir</strong> el Excel: las asignaciones que ya existen se conservan (sin duplicarse) y solo se agregan las nuevas o las que faltan (por ejemplo, un turno recién asignado).
               </div>
             </div>
           </div>
