@@ -296,7 +296,10 @@ export default function CargarPDO() {
               {reading ? 'Leyendo el archivo…' : fileName || 'Toca para subir el PDO (Excel)'}
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', marginTop: 4 }}>Formatos .xlsx o .xls</div>
-            <input type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onChange={handlePdoFile} disabled={reading} style={{ display: 'none' }} />
+            {/* Sin atributo accept: algunos celulares muestran en gris (no
+                seleccionable) los .xlsx llegados por WhatsApp/correo. Se acepta
+                cualquier archivo y se valida al leerlo (try/catch en handlePdoFile). */}
+            <input type="file" onChange={handlePdoFile} disabled={reading} style={{ display: 'none' }} />
           </label>
 
           {resumen && (
