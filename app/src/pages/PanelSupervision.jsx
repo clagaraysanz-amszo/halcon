@@ -310,37 +310,46 @@ export default function PanelSupervision() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {recentFlights.map((f) => {
               const tramo = tramosByN.get(f.tramo_n);
+              const esOtroVuelo = !f.tramo_n;
+              const nombre = esOtroVuelo ? f.tipificacion : (tramo?.nombre ?? '—');
               const lat = f.latitud ?? tramo?.latitud;
               const lng = f.longitud ?? tramo?.longitud;
               const mapsUrl = googleMapsUrl(lat, lng);
               const gpsPropio = f.latitud != null && f.longitud != null;
               return (
-                <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 11, paddingBottom: 9, borderBottom: '1px solid #F1F3F7' }}>
-                  <div style={{ width: 36, height: 36, flex: 'none', borderRadius: 10, background: 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800 }}>
-                    {f.tramo_n}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--texto-titulo)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {tramo?.nombre ?? '—'}
+                <div key={f.id} style={{ paddingBottom: 9, borderBottom: '1px solid #F1F3F7' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                    <div style={{ width: 36, height: 36, flex: 'none', borderRadius: 10, background: esOtroVuelo ? '#7C3AED' : 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: esOtroVuelo ? 16 : 13, fontWeight: 800 }}>
+                      {esOtroVuelo ? '◎' : f.tramo_n}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--texto-secundario)', marginTop: 1 }}>
-                      Halcón {f.halcon_n} · {f.hora_inicio}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--texto-titulo)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {nombre}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--texto-secundario)', marginTop: 1 }}>
+                        Halcón {f.halcon_n} · {f.hora_inicio}{f.ubicacion_manual ? ` · ${f.ubicacion_manual}` : ''}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flex: 'none' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--verde-ok)' }}>{f.minutos}min</span>
+                      {mapsUrl && (
+                        <a
+                          href={mapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={gpsPropio ? 'Ubicación GPS del vuelo' : 'Ubicación del tramo (sin GPS del vuelo)'}
+                          style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--azul)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                        >
+                          📍 Mapa{gpsPropio ? '' : '*'}
+                        </a>
+                      )}
                     </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flex: 'none' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--verde-ok)' }}>{f.minutos}min</span>
-                    {mapsUrl && (
-                      <a
-                        href={mapsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={gpsPropio ? 'Ubicación GPS del vuelo' : 'Ubicación del tramo (sin GPS del vuelo)'}
-                        style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--azul)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}
-                      >
-                        📍 Mapa{gpsPropio ? '' : '*'}
-                      </a>
-                    )}
-                  </div>
+                  {f.observaciones && (
+                    <div style={{ marginTop: 5, marginLeft: 47, padding: '5px 9px', background: '#F7F9FC', borderRadius: 7, border: '1px solid #EEF2F8', fontSize: 11, color: 'var(--texto-secundario)', fontStyle: 'italic' }}>
+                      {f.observaciones}
+                    </div>
+                  )}
                 </div>
               );
             })}
