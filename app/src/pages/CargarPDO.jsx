@@ -294,9 +294,9 @@ export default function CargarPDO() {
   }
 
   async function borrarPDO() {
-    const pendientesCount = existing.filter((r) => r.estado === 'Pendiente').length;
-    const realizadosCount = existing.length - pendientesCount;
-    if (pendientesCount === 0) {
+    const pendientes = existing.filter((r) => r.estado === 'Pendiente');
+    const realizadosCount = existing.length - pendientes.length;
+    if (pendientes.length === 0) {
       setError(
         realizadosCount > 0
           ? `No hay sobrevuelos pendientes que borrar. Los ${realizadosCount} vuelos ya realizados quedan en el historial.`
@@ -304,18 +304,56 @@ export default function CargarPDO() {
       );
       return;
     }
-    const msg =
-      realizadosCount > 0
-        ? `Vas a borrar ${pendientesCount} sobrevuelos pendientes de ${fecha}. Los ${realizadosCount} ya realizados se mantendrán en el historial. ¿Continuar?`
-        : `Vas a borrar los ${pendientesCount} sobrevuelos del PDO de ${fecha}. Esta acción no se puede deshacer. ¿Continuar?`;
-    if (!window.confirm(msg)) return;
+
+    // Detecta duplicados exactos: mismo (halcon_n, tramo_n, hora) más de una vez.
+    // Solo se ofrecen a borrar los duplicados extras, preservando 1 de cada.
+    const grupos = new Map();
+    pendientes.forEach((r) => {
+      const key = `${r.halcon_n}|${r.tramo_n}|${r.hora}`;
+      if (!grupos.has(key)) grupos.set(key, []);
+      grupos.get(key).push(r);
+    });
+    const idsDuplicados = [];
+    grupos.forEach((rows) => {
+      if (rows.length > 1) {
+        // Ordena por id (uuid) y conserva el primero, borra el resto.
+        const sorted = [...rows].sort((a, b) => a.id.localeCompare(b.id));
+        idsDuplicados.push(...sorted.slice(1).map((r) => r.id));
+      }
+    });
+
+    let ids;
+    let successMsg;
+    if (idsDuplicados.length > 0) {
+      // Hay duplicados: ofrecer borrar solo los extras.
+      const confirmar = window.confirm(
+        `Se detectaron ${idsDuplicados.length} sobrevuelos duplicados en el PDO de ${fecha}.\n\n` +
+          `¿Borrar solo los duplicados?\n` +
+          `Quedarán ${pendientes.length - idsDuplicados.length} sobrevuelos pendientes únicos.`
+      );
+      if (!confirmar) return;
+      ids = idsDuplicados;
+      successMsg = `${idsDuplicados.length} sobrevuelos duplicados eliminados de ${fecha}.`;
+    } else {
+      // Sin duplicados: pedir doble confirmación para borrar todo el PDO.
+      const msg =
+        realizadosCount > 0
+          ? `⚠ NO hay duplicados en el PDO de ${fecha}.\n\n` +
+            `Si continúas, se borrarán los ${pendientes.length} sobrevuelos pendientes (los ${realizadosCount} realizados se mantendrán). Esto elimina el PDO del día para los turnos pendientes.\n\n` +
+            `¿Continuar de todos modos?`
+          : `⚠ NO hay duplicados en el PDO de ${fecha}.\n\n` +
+            `Si continúas, se borrarán TODOS los ${pendientes.length} sobrevuelos del PDO. Los funcionarios se quedarán sin asignaciones.\n\n` +
+            `¿Continuar de todos modos?`;
+      if (!window.confirm(msg)) return;
+      // Doble confirmación en el caso destructivo.
+      if (!window.confirm(`Confirmación final: se eliminarán ${pendientes.length} sobrevuelos de ${fecha}. Esta acción NO se puede deshacer. ¿Estás seguro?`)) return;
+      ids = pendientes.map((r) => r.id);
+      successMsg = `PDO eliminado: ${pendientes.length} sobrevuelos borrados de ${fecha}.`;
+    }
+
     setDeleting(true);
     setError('');
-    const { error } = await supabase
-      .from('pdo_dia')
-      .delete()
-      .eq('fecha', fecha)
-      .eq('estado', 'Pendiente');
+    const { error } = await supabase.from('pdo_dia').delete().in('id', ids);
     setDeleting(false);
     if (error) {
       setError('Error al borrar el PDO: ' + error.message);
@@ -324,7 +362,7 @@ export default function CargarPDO() {
     setPending([]);
     setResumen(null);
     setFileName('');
-    setSuccess(`PDO eliminado: ${pendientesCount} sobrevuelos borrados de ${fecha}.`);
+    setSuccess(successMsg);
   }
 
   return (
