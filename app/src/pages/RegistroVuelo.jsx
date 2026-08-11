@@ -6,22 +6,46 @@ import ScreenHeader from '../components/ScreenHeader';
 
 const ALTURAS = ['60 metros', '70 metros', '80 metros', '90 metros', '100 metros', '110 metros', '120 metros', '200 metros', '300 metros', '400 metros', '500 metros', '600 metros'];
 const DISTANCIAS = ['100 metros', '200 metros', '300 metros', '400 metros', '500 metros', '600 metros', '700 metros', '800 metros', '900 metros', '1000 metros'];
-const AERONAVES = ['DUAL', 'AUTEL', '3TD', 'MATRICE 300', 'AIR 2'];
-const TIPIFICACIONES = ['Paneo Preventivo', 'Paneo Focalizado', 'Informe Situacional', 'Monitoreo Preventivo', 'Constancia de Servicio'];
+const AERONAVES = ['DUAL', 'AUTEL', '3TD', 'MATRICE 300', 'AIR 2', 'ADVANCED', 'ZOOM'];
+const TIPIFICACIONES_TRAMO = ['Paneo Preventivo', 'Paneo Focalizado', 'Informe Situacional', 'Constancia de Servicio'];
 const ESTADOS = ['Realizado', 'Interrumpido', 'Reprogramado'];
+const TURNOS_SELECT = ['A', 'B', 'N', 'SE'];
+
+const FARELLONES_UBICACIONES = [
+  { grupo: 'Ruta G-21', opciones: ['Base Ermita', 'Curva 01', 'Curva 12', 'Curva 16', 'Curva 21 (Plazoleta negra)', 'Curva 32', 'Drop Off', 'La Parva', 'El Colorado'] },
+  { grupo: 'Ruta G-251', opciones: ['Plaza de los pumas', 'Curva 07', 'Curva 16'] },
+];
 
 export default function RegistroVuelo() {
   const { operador } = useAuth();
-  const { selectedTramo, form, setField } = useRegistro();
+  const { selectedTramo, selectedTipoVuelo, form, setField } = useRegistro();
   const navigate = useNavigate();
 
-  if (!selectedTramo) return <Navigate to="/tramos" replace />;
+  const esTramo = !!selectedTramo;
+  const esOtroVuelo = !!selectedTipoVuelo;
+  const esFarellones = selectedTipoVuelo === 'Servicio Farellones';
 
-  const puedeContinuar = form.altura && form.minutos > 0 && form.distancia && form.aeronave && form.tipificacion && form.estado;
+  if (!esTramo && !esOtroVuelo) return <Navigate to="/tramos" replace />;
+
+  const puedeContinuar =
+    form.altura &&
+    form.minutos > 0 &&
+    form.distancia &&
+    form.aeronave &&
+    form.turno &&
+    form.estado &&
+    (esTramo ? form.tipificacion : true) &&
+    (esFarellones ? form.ubicacionManual : true);
+
+  const headerTitle = esTramo ? 'Registro del Vuelo' : 'Registro de Vuelo';
+  const headerSubtitle = esTramo
+    ? `Tramo ${selectedTramo.tramo_n} · ${selectedTramo.nombre}`
+    : selectedTipoVuelo;
+  const backPath = esTramo ? '/tramos' : '/otros-vuelos';
 
   return (
     <div className="screen">
-      <ScreenHeader onBack={() => navigate('/tramos')} title="Registro del Vuelo" subtitle={`Tramo ${selectedTramo.tramo_n} · ${selectedTramo.nombre}`} />
+      <ScreenHeader onBack={() => navigate(backPath)} title={headerTitle} subtitle={headerSubtitle} />
 
       <div className="content">
         <div style={{ background: 'var(--verde-fondo-2)', border: '1px solid var(--verde-borde)', borderRadius: 16, padding: '14px 15px' }}>
@@ -39,15 +63,50 @@ export default function RegistroVuelo() {
           </div>
         </div>
 
+        {esOtroVuelo && (
+          <div style={{ background: '#F3F0FF', border: '1px solid #DDD6FE', borderRadius: 14, padding: '12px 15px' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#7C3AED', letterSpacing: 0.5 }}>TIPO DE VUELO</div>
+            <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--texto-titulo)', marginTop: 3 }}>{selectedTipoVuelo}</div>
+          </div>
+        )}
+
+        <div>
+          <label className="field-label">Turno</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {TURNOS_SELECT.map((t) => (
+              <button key={t} onClick={() => setField('turno', t)} className={`chip ${form.turno === t ? 'chip--on' : ''}`} style={{ flex: 1 }}>
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {esFarellones && (
+          <div>
+            <label className="field-label">Ubicación</label>
+            <div className="field-wrap">
+              <select className="field-select" value={form.ubicacionManual} onChange={(e) => setField('ubicacionManual', e.target.value)}>
+                <option value="">Seleccionar ubicación…</option>
+                {FARELLONES_UBICACIONES.map((g) => (
+                  <optgroup key={g.grupo} label={g.grupo}>
+                    {g.opciones.map((o) => (
+                      <option key={o} value={o}>{o}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              <span className="field-caret">▼</span>
+            </div>
+          </div>
+        )}
+
         <div>
           <label className="field-label">Altura de vuelo</label>
           <div className="field-wrap">
             <select className="field-select" value={form.altura} onChange={(e) => setField('altura', e.target.value)}>
               <option value="">Seleccionar altura…</option>
               {ALTURAS.map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
+                <option key={a} value={a}>{a}</option>
               ))}
             </select>
             <span className="field-caret">▼</span>
@@ -75,9 +134,7 @@ export default function RegistroVuelo() {
           <div className="field-wrap">
             <select className="field-select" value={form.distancia} onChange={(e) => setField('distancia', e.target.value)}>
               {DISTANCIAS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
+                <option key={d} value={d}>{d}</option>
               ))}
             </select>
             <span className="field-caret">▼</span>
@@ -95,19 +152,19 @@ export default function RegistroVuelo() {
           </div>
         </div>
 
-        <div>
-          <label className="field-label">Tipificación</label>
-          <div className="field-wrap">
-            <select className="field-select" value={form.tipificacion} onChange={(e) => setField('tipificacion', e.target.value)}>
-              {TIPIFICACIONES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-            <span className="field-caret">▼</span>
+        {esTramo && (
+          <div>
+            <label className="field-label">Tipificación</label>
+            <div className="field-wrap">
+              <select className="field-select" value={form.tipificacion} onChange={(e) => setField('tipificacion', e.target.value)}>
+                {TIPIFICACIONES_TRAMO.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+              <span className="field-caret">▼</span>
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
           <label className="field-label">Estado del vuelo</label>

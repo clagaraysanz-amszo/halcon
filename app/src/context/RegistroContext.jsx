@@ -12,21 +12,30 @@ export function blankForm() {
     estado: 'Realizado',
     observaciones: '',
     horaInicio: '',
+    turno: '',
+    ubicacionManual: '',
   };
 }
 
-// Estado efímero del flujo Selección de Tramo -> Registro -> Confirmación -> Éxito.
-// Vive en memoria durante la sesión (no persiste al recargar), igual que en el prototipo.
 export function RegistroProvider({ children }) {
   const [selectedTramo, setSelectedTramo] = useState(null);
-  const [selectedPdo, setSelectedPdo] = useState(null); // fila de pdo_dia si vino de una asignación
+  const [selectedPdo, setSelectedPdo] = useState(null);
+  const [selectedTipoVuelo, setSelectedTipoVuelo] = useState(null);
   const [form, setForm] = useState(blankForm());
   const [lastFlight, setLastFlight] = useState(null);
 
   function startRegistro(tramo, pdoRow = null) {
     setSelectedTramo(tramo);
     setSelectedPdo(pdoRow);
-    setForm({ ...blankForm(), horaInicio: nowHHMM() });
+    setSelectedTipoVuelo(null);
+    setForm({ ...blankForm(), horaInicio: nowHHMM(), tipificacion: 'Paneo Preventivo', turno: pdoRow?.turno || '' });
+  }
+
+  function startOtroVuelo(tipo) {
+    setSelectedTramo(null);
+    setSelectedPdo(null);
+    setSelectedTipoVuelo(tipo);
+    setForm({ ...blankForm(), horaInicio: nowHHMM(), tipificacion: tipo });
   }
 
   function setField(key, value) {
@@ -36,15 +45,18 @@ export function RegistroProvider({ children }) {
   function reset() {
     setSelectedTramo(null);
     setSelectedPdo(null);
+    setSelectedTipoVuelo(null);
     setForm(blankForm());
   }
 
   const value = {
     selectedTramo,
     selectedPdo,
+    selectedTipoVuelo,
     form,
     setField,
     startRegistro,
+    startOtroVuelo,
     lastFlight,
     setLastFlight,
     reset,

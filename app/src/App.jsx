@@ -15,6 +15,7 @@ import Exito from './pages/Exito';
 import HistorialDia from './pages/HistorialDia';
 import CargarPDO from './pages/CargarPDO';
 import PanelSupervision from './pages/PanelSupervision';
+import OtrosVuelos from './pages/OtrosVuelos';
 
 function RootRedirect() {
   const { loading, isSupervisor } = useAuth();
@@ -50,6 +51,7 @@ export default function App() {
               <Route path="/registro" element={<RegistroVuelo />} />
               <Route path="/registro/confirmar" element={<Confirmacion />} />
               <Route path="/registro/exito" element={<Exito />} />
+              <Route path="/otros-vuelos" element={<OtrosVuelos />} />
               <Route path="/historial" element={<HistorialDia />} />
 
               <Route element={<RequireSupervisor />}>

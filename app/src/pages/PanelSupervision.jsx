@@ -5,7 +5,6 @@ import { useCatalog } from '../context/CatalogContext';
 import { useSupervisorDay } from '../hooks/useSupervisorDay';
 import { TURNOS, compararHoraTurno, fechaOperativaHoy, toISODate } from '../lib/turnos';
 import { googleMapsUrl } from '../lib/geo';
-import { descargarBitacora } from '../lib/exportBitacora';
 
 const TURNO_OPTS = ['A', 'B', 'N'];
 const DIAS_SEM = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -352,26 +351,6 @@ export default function PanelSupervision() {
             </div>
           )}
         </div>
-
-        {/* Descargar bitácora Excel */}
-        {day.flights.length > 0 && (
-          <button
-            onClick={() => descargarBitacora(day.flights, day.pdoRows, fecha, tramosByN, operadoresByHalcon)}
-            className="card"
-            style={{ width: '100%', padding: '14px 15px', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12 }}
-          >
-            <div style={{ width: 44, height: 44, flex: 'none', borderRadius: 12, background: '#217346', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-              📊
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--texto-titulo)' }}>Descargar Bitácora</div>
-              <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', fontWeight: 600, marginTop: 1 }}>
-                Excel con {day.flights.length} vuelos · {formatFechaLabel(fecha)}
-              </div>
-            </div>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#217346' }}>Descargar ›</span>
-          </button>
-        )}
 
       </div>
     </div>

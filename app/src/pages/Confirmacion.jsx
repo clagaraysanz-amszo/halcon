@@ -7,21 +7,26 @@ import ScreenHeader from '../components/ScreenHeader';
 
 export default function Confirmacion() {
   const { operador } = useAuth();
-  const { selectedTramo, selectedPdo, form, setLastFlight } = useRegistro();
+  const { selectedTramo, selectedPdo, selectedTipoVuelo, form, setLastFlight } = useRegistro();
   const day = useOperatorDay(operador.halcon_n);
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  if (!selectedTramo) return <Navigate to="/tramos" replace />;
+  const esTramo = !!selectedTramo;
+  const esOtroVuelo = !!selectedTipoVuelo;
+
+  if (!esTramo && !esOtroVuelo) return <Navigate to="/tramos" replace />;
 
   const summary = [
+    { k: 'Turno', v: form.turno || '—' },
     { k: 'Altura de vuelo', v: form.altura || '—' },
     { k: 'Duración', v: `${form.minutos} minutos` },
     { k: 'Distancia recorrida', v: form.distancia || '—' },
     { k: 'Aeronave', v: form.aeronave },
     { k: 'Tipificación', v: form.tipificacion },
-    { k: 'Cuadrante', v: selectedTramo.cuadrante },
+    ...(esTramo ? [{ k: 'Cuadrante', v: selectedTramo.cuadrante }] : []),
+    ...(esOtroVuelo && form.ubicacionManual ? [{ k: 'Ubicación', v: form.ubicacionManual }] : []),
     { k: 'Estado', v: form.estado },
     { k: 'Observaciones', v: form.observaciones || 'Sin observaciones' },
   ];
@@ -31,13 +36,14 @@ export default function Confirmacion() {
     setError('');
     try {
       const inserted = await day.confirmFlight({
-        tramoN: selectedTramo.tramo_n,
+        tramoN: esTramo ? selectedTramo.tramo_n : null,
         form,
         pdoRow: selectedPdo,
         tramoInfo: selectedTramo,
         operadorNombre: operador.nombre,
+        tipoVuelo: selectedTipoVuelo,
       });
-      setLastFlight({ ...inserted, nombre: selectedTramo.nombre });
+      setLastFlight({ ...inserted, nombre: esTramo ? selectedTramo.nombre : selectedTipoVuelo });
       navigate('/registro/exito');
     } catch (e) {
       setError('No se pudo guardar el registro. Intenta nuevamente.');
@@ -45,33 +51,58 @@ export default function Confirmacion() {
     }
   }
 
+  const headerBg = esTramo
+    ? 'linear-gradient(135deg,#16233F,#22375F)'
+    : 'linear-gradient(135deg,#4C1D95,#6D28D9)';
+
   return (
     <div className="screen">
       <ScreenHeader onBack={() => navigate('/registro')} title="Confirmación" subtitle="Revisa antes de guardar" />
 
       <div className="content">
         <div className="card" style={{ overflow: 'hidden' }}>
-          <div style={{ background: 'linear-gradient(135deg,#16233F,#22375F)', padding: '16px 18px', color: '#fff', display: 'flex', alignItems: 'center', gap: 13 }}>
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 13,
-                background: 'var(--naranjo)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 800,
-              }}
-            >
-              <span style={{ fontSize: 8, opacity: 0.8 }}>TRAMO</span>
-              <span style={{ fontSize: 19 }}>{selectedTramo.tramo_n}</span>
-            </div>
+          <div style={{ background: headerBg, padding: '16px 18px', color: '#fff', display: 'flex', alignItems: 'center', gap: 13 }}>
+            {esTramo ? (
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 13,
+                  background: 'var(--naranjo)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                }}
+              >
+                <span style={{ fontSize: 8, opacity: 0.8 }}>TRAMO</span>
+                <span style={{ fontSize: 19 }}>{selectedTramo.tramo_n}</span>
+              </div>
+            ) : (
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 13,
+                  background: 'rgba(255,255,255,.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 22,
+                }}
+              >
+                ◎
+              </div>
+            )}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 15.5, fontWeight: 700, lineHeight: 1.2 }}>{selectedTramo.nombre}</div>
+              <div style={{ fontSize: 15.5, fontWeight: 700, lineHeight: 1.2 }}>
+                {esTramo ? selectedTramo.nombre : selectedTipoVuelo}
+              </div>
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,.65)', marginTop: 2 }}>
-                {selectedTramo.sector} · Cuad. {selectedTramo.cuadrante}
+                {esTramo
+                  ? `${selectedTramo.sector} · Cuad. ${selectedTramo.cuadrante}`
+                  : form.ubicacionManual || 'Vuelo operativo'}
               </div>
             </div>
           </div>

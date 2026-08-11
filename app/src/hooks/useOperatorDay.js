@@ -3,11 +3,6 @@ import { supabase } from '../lib/supabaseClient';
 import { fechaOperativaHoy, compararHoraTurno } from '../lib/turnos';
 import { capturarUbicacion } from '../lib/geo';
 
-/**
- * Datos del día operativo para UN operador: sus asignaciones del PDO de hoy
- * (todos los turnos, aunque normalmente es uno) y sus vuelos registrados hoy.
- * Ver README §5 (reglas de negocio).
- */
 export function useOperatorDay(halconN) {
   const fecha = fechaOperativaHoy();
   const [pdoRows, setPdoRows] = useState([]);
@@ -49,13 +44,7 @@ export function useOperatorDay(halconN) {
     refetch();
   }, [refetch]);
 
-  /**
-   * Confirma un vuelo: inserta en registro_vuelos y, si vino de una
-   * asignación del PDO, marca esa fila como 'Realizado' (README §5.3).
-   */
-  async function confirmFlight({ tramoN, form, pdoRow, tramoInfo, operadorNombre }) {
-    // Captura de GPS silenciosa (README §7). No bloquea el guardado: si el
-    // operador niega el permiso o no hay señal, `ubic` es null y se guarda igual.
+  async function confirmFlight({ tramoN, form, pdoRow, tramoInfo, operadorNombre, tipoVuelo }) {
     const ubic = await capturarUbicacion();
 
     const { data: inserted, error: insertError } = await supabase
@@ -63,7 +52,7 @@ export function useOperatorDay(halconN) {
       .insert({
         fecha,
         halcon_n: halconN,
-        tramo_n: tramoN,
+        tramo_n: tramoN || null,
         altura: form.altura,
         minutos: form.minutos,
         distancia: form.distancia || null,
@@ -75,13 +64,16 @@ export function useOperatorDay(halconN) {
         pdo_id: pdoRow?.id ?? null,
         latitud: ubic?.lat ?? null,
         longitud: ubic?.lng ?? null,
+        turno_manual: form.turno || null,
+        ubicacion_manual: form.ubicacionManual || null,
       })
       .select()
       .single();
 
     if (insertError) throw insertError;
 
-    // Enviar a OneDrive en segundo plano (no bloquea el guardado)
+    const ubicacionExcel = form.ubicacionManual || tramoInfo?.nombre || '—';
+
     try {
       fetch('/api/onedrive/append', {
         method: 'POST',
@@ -90,10 +82,10 @@ export function useOperatorDay(halconN) {
           Fecha: fecha,
           Operador: `Halcón ${halconN}`,
           'Modelo De RPA': form.aeronave,
-          Turno: pdoRow?.turno || '—',
+          Turno: form.turno || '—',
           Tipificacion: form.tipificacion,
           Tramo: tramoN ? 'SI' : 'NO',
-          Ubicacion: tramoInfo?.nombre || '—',
+          Ubicacion: ubicacionExcel,
           Cuadrante: tramoInfo?.cuadrante || '—',
           'Duracion Vuelo': `${form.minutos} minutos`,
           'Altura Metros': form.altura,

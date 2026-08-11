@@ -226,6 +226,33 @@ export default function Home() {
         </button>
 
         <button
+          onClick={() => navigate('/otros-vuelos')}
+          className="btn btn-outline"
+          style={{ padding: 22, height: 'auto', justifyContent: 'flex-start', gap: 16, textAlign: 'left', borderColor: '#7C3AED' }}
+        >
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              flex: 'none',
+              borderRadius: 15,
+              background: '#F3F0FF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 26,
+            }}
+          >
+            📝
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 19, fontWeight: 700, color: 'var(--texto-titulo)' }}>Otros Vuelos</div>
+            <div style={{ fontSize: 13, color: 'var(--texto-secundario)', marginTop: 2 }}>Vuelos operativos sin tramo</div>
+          </div>
+          <span style={{ fontSize: 22, color: '#7C3AED' }}>→</span>
+        </button>
+
+        <button
           onClick={() => navigate('/historial')}
           className="btn-outline btn"
           style={{ padding: 16, height: 'auto', justifyContent: 'flex-start', gap: 13, textAlign: 'left' }}
