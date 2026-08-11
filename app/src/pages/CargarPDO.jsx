@@ -70,6 +70,27 @@ function turnoDeHora(hora) {
   return 'N';
 }
 
+const MESES = {
+  enero: 1, febrero: 2, marzo: 3, abril: 4, mayo: 5, junio: 6,
+  julio: 7, agosto: 8, septiembre: 9, setiembre: 9, octubre: 10, noviembre: 11, diciembre: 12,
+};
+
+/** Busca una fecha escrita "DD de MES de AAAA" dentro del texto del PDO. */
+function fechaDesdeTexto(text) {
+  const m = normaliza(text).match(/(\d{1,2})\s+de\s+([a-z]+)\s+de\s+(\d{4})/);
+  if (m && MESES[m[2]]) {
+    return `${m[3]}-${String(MESES[m[2]]).padStart(2, '0')}-${String(Number(m[1])).padStart(2, '0')}`;
+  }
+  return null;
+}
+
+/** Busca una fecha DD-MM-AAAA (o con . / _) en el nombre del archivo. */
+function fechaDesdeNombre(name) {
+  const m = String(name).match(/(\d{1,2})[-_.](\d{1,2})[-_.](\d{4})/);
+  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  return null;
+}
+
 /**
  * Interpreta el PDO COMPLETO pegado como texto. Por cada bloque "SOBREVUELOS…"
  * busca hacia atrás el nombre del operador de dron y lo empareja con la tabla
@@ -166,7 +187,8 @@ export default function CargarPDO() {
     setPending((p) => p.filter((_, i) => i !== idx));
   }
 
-  function procesarTextoPdo(text) {
+  function procesarTextoPdo(text, fechaUsar) {
+    const f = fechaUsar || fecha;
     const { asignaciones, noReconocidos } = interpretarPDO(text, operadores);
     if (asignaciones.length === 0) {
       setResumen(null);
@@ -183,14 +205,14 @@ export default function CargarPDO() {
           sectoresInexistentes.add(r.tramo_n);
           continue;
         }
-        nuevas.push({ fecha, turno: r.turno, halcon_n: a.halcon_n, tramo_n: r.tramo_n, hora: r.hora });
+        nuevas.push({ fecha: f, turno: r.turno, halcon_n: a.halcon_n, tramo_n: r.tramo_n, hora: r.hora });
         n += 1;
       }
       const turnos = [...new Set(a.rows.map((r) => r.turno))].join('/');
       detalle.push({ halcon_n: a.halcon_n, nombre: a.nombre, turno: turnos, count: n });
     }
     setPending((p) => [...p, ...nuevas]);
-    setResumen({ detalle, noReconocidos, inexistentes: [...sectoresInexistentes] });
+    setResumen({ fecha: f, detalle, noReconocidos, inexistentes: [...sectoresInexistentes] });
     setError('');
   }
 
@@ -206,7 +228,14 @@ export default function CargarPDO() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        procesarTextoPdo(excelATexto(reader.result));
+        const texto = excelATexto(reader.result);
+        // Fecha del PDO: primero desde el contenido, luego desde el nombre del
+        // archivo, y si no, la fecha operativa por defecto. El supervisor puede
+        // corregirla en el campo "Fecha operativa".
+        const detectada = fechaDesdeTexto(texto) || fechaDesdeNombre(file.name);
+        const fechaUsar = detectada || fecha;
+        if (detectada) setFecha(detectada);
+        procesarTextoPdo(texto, fechaUsar);
       } catch {
         setError('No se pudo leer el archivo. Sube el PDO en formato Excel (.xlsx o .xls).');
       } finally {
@@ -272,6 +301,9 @@ export default function CargarPDO() {
 
           {resumen && (
             <div style={{ marginTop: 12, borderTop: '1px solid var(--fondo-app)', paddingTop: 11 }}>
+              <div style={{ fontSize: 11.5, color: 'var(--texto-secundario)', marginBottom: 8 }}>
+                Fecha del PDO: <strong style={{ color: 'var(--texto-titulo)' }}>{resumen.fecha}</strong> · se asignará a esta fecha (ajústala arriba si no corresponde).
+              </div>
               <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--texto-titulo)', marginBottom: 7 }}>Operadores detectados</div>
               {resumen.detalle.map((d) => (
                 <div key={d.halcon_n} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--texto-titulo)', padding: '3px 0' }}>
