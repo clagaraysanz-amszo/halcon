@@ -296,13 +296,13 @@ export default function CargarPDO() {
               {reading ? 'Leyendo el archivo…' : fileName || 'Toca para subir el PDO (Excel)'}
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', marginTop: 4 }}>Formatos .xlsx o .xls</div>
-            {/* accept incluye extensiones + MIME + application/octet-stream:
-                sin accept, iOS/Android abren el picker de fotos por defecto.
-                El octet-stream cubre los .xlsx que llegan por WhatsApp con MIME
-                genérico (que antes aparecían grises al filtrar solo por MIME). */}
+            {/* accept solo con extensiones: en Xiaomi/MIUI y algunos Android,
+                los MIME types (incluido application/octet-stream) disparan el
+                picker de galeria/camara. Con solo extensiones, Chrome Android
+                abre el explorador de archivos y el .xlsx llega seleccionable. */}
             <input
               type="file"
-              accept=".xlsx,.xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream"
+              accept=".xlsx,.xls"
               onChange={handlePdoFile}
               disabled={reading}
               style={{ display: 'none' }}
