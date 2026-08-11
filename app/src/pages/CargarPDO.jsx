@@ -151,6 +151,7 @@ export default function CargarPDO() {
   const [existing, setExisting] = useState([]);
   const [loadingExisting, setLoadingExisting] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -266,6 +267,40 @@ export default function CargarPDO() {
     setSuccess(`PDO distribuido: ${pending.length} filas agregadas para ${fecha}.`);
   }
 
+  async function borrarPDO() {
+    const pendientesCount = existing.filter((r) => r.estado === 'Pendiente').length;
+    const realizadosCount = existing.length - pendientesCount;
+    if (pendientesCount === 0) {
+      setError(
+        realizadosCount > 0
+          ? `No hay sobrevuelos pendientes que borrar. Los ${realizadosCount} vuelos ya realizados quedan en el historial.`
+          : 'No hay PDO cargado para esta fecha.'
+      );
+      return;
+    }
+    const msg =
+      realizadosCount > 0
+        ? `Vas a borrar ${pendientesCount} sobrevuelos pendientes de ${fecha}. Los ${realizadosCount} ya realizados se mantendrán en el historial. ¿Continuar?`
+        : `Vas a borrar los ${pendientesCount} sobrevuelos del PDO de ${fecha}. Esta acción no se puede deshacer. ¿Continuar?`;
+    if (!window.confirm(msg)) return;
+    setDeleting(true);
+    setError('');
+    const { error } = await supabase
+      .from('pdo_dia')
+      .delete()
+      .eq('fecha', fecha)
+      .eq('estado', 'Pendiente');
+    setDeleting(false);
+    if (error) {
+      setError('Error al borrar el PDO: ' + error.message);
+      return;
+    }
+    setPending([]);
+    setResumen(null);
+    setFileName('');
+    setSuccess(`PDO eliminado: ${pendientesCount} sobrevuelos borrados de ${fecha}.`);
+  }
+
   return (
     <div className="screen">
       <ScreenHeader onBack={() => navigate('/supervisor')} title="Cargar PDO del día" subtitle="Plan de Despliegue Operativo" variant="dark" />
@@ -280,6 +315,18 @@ export default function CargarPDO() {
           <label className="field-label">Fecha operativa del PDO</label>
           <input type="date" className="field-input" value={fecha} onChange={(e) => setFecha(e.target.value)} />
         </div>
+
+        {existing.length > 0 && !success && (
+          <div style={{ background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <span style={{ fontSize: 20, flex: 'none', lineHeight: 1 }}>⚠️</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#92400E' }}>Ya hay PDO cargado para {fecha}</div>
+              <div style={{ fontSize: 11.5, color: '#78350F', marginTop: 3, lineHeight: 1.45 }}>
+                {existing.length} sobrevuelos existentes. Si subes otro Excel se <strong>duplicarán</strong>. Si vas a reemplazar el PDO, bórralo primero con el botón de abajo.
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="card" style={{ padding: 15 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--texto-titulo)', marginBottom: 3 }}>Subir PDO del día</div>
@@ -367,8 +414,19 @@ export default function CargarPDO() {
           </div>
         )}
 
-        <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', fontWeight: 700, letterSpacing: 0.5, marginTop: 4 }}>
-          DISTRIBUCIÓN ACTUAL PARA {fecha}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 4 }}>
+          <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', fontWeight: 700, letterSpacing: 0.5 }}>
+            DISTRIBUCIÓN ACTUAL PARA {fecha}
+          </div>
+          {existing.length > 0 && (
+            <button
+              onClick={borrarPDO}
+              disabled={deleting}
+              style={{ border: '1px solid #FECACA', background: '#FEF2F2', color: '#B91C1C', fontSize: 11.5, fontWeight: 700, padding: '6px 11px', borderRadius: 8, cursor: deleting ? 'default' : 'pointer', display: 'flex', alignItems: 'center', gap: 5, flex: 'none' }}
+            >
+              {deleting ? 'Borrando…' : '🗑 Borrar PDO'}
+            </button>
+          )}
         </div>
         {!loadingExisting &&
           distribucion.map((p) => (
