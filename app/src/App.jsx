@@ -15,6 +15,7 @@ import Exito from './pages/Exito';
 import HistorialDia from './pages/HistorialDia';
 import CargarPDO from './pages/CargarPDO';
 import PanelSupervision from './pages/PanelSupervision';
+import ResumenSemanal from './pages/ResumenSemanal';
 import OtrosVuelos from './pages/OtrosVuelos';
 
 function RootRedirect() {
@@ -57,6 +58,7 @@ export default function App() {
               <Route element={<RequireSupervisor />}>
                 <Route path="/supervisor" element={<PanelSupervision />} />
                 <Route path="/supervisor/pdo" element={<CargarPDO />} />
+                <Route path="/supervisor/semanal" element={<ResumenSemanal />} />
               </Route>
             </Route>
           </Route>
