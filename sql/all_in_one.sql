@@ -208,7 +208,7 @@ insert into public.operadores (halcon_n, nombre, rol, email) values
   ('3',   'José Correa',        'Operador',   'halcon3@lobarnechea.cl'),
   ('4',   'Esteban Cáceres',    'Operador',   'halcon4@lobarnechea.cl'),
   ('5',   'Sebastián Castillo', 'Operador',   'halcon5@lobarnechea.cl'),
-  ('6',   'Miguel Gallardo',    'Operador',   'halcon6@lobarnechea.cl'),
+  ('6',   'Miguel Cortez',      'Operador',   'halcon6@lobarnechea.cl'),
   ('7',   'Juan Gutiérrez',     'Operador',   'halcon7@lobarnechea.cl'),
   ('S4',  'Ignacio Vidal',      'Supervisor', 'ividal@lobarnechea.cl'),
   ('S23', 'Claudio Garay',      'Supervisor', 'cgaray@amszo.cl')
