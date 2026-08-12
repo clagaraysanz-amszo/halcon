@@ -5,6 +5,7 @@ import ScreenHeader from '../components/ScreenHeader';
 const OTROS_TIPOS = [
   { tipo: 'Informe Situacional', icono: '📄' },
   { tipo: 'Detección de Ruco', icono: '🔍' },
+  { tipo: 'Verificación de Incivilidades', icono: '⚠️' },
   { tipo: 'Constancia de Servicio', icono: '📋' },
   { tipo: 'Monitoreo de Quebradas', icono: '🏔' },
   { tipo: 'Sospechoso Interior de Domicilio', icono: '🏠' },

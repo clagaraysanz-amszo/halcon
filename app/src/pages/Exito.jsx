@@ -7,6 +7,14 @@ export default function Exito() {
 
   if (!lastFlight) return <Navigate to="/inicio" replace />;
 
+  const esTramo = lastFlight.tramo_n != null;
+  const origen = esTramo ? '/tramos' : '/otros-vuelos';
+  const titulo = esTramo ? 'Tramo registrado\ncorrectamente' : 'Vuelo registrado\ncorrectamente';
+  const detalle = esTramo
+    ? `Tramo ${lastFlight.tramo_n} · ${lastFlight.nombre}`
+    : lastFlight.nombre;
+  const textoRegistrarOtro = esTramo ? 'Registrar otro tramo' : 'Registrar otro vuelo';
+
   function volverInicio() {
     reset();
     navigate('/inicio');
@@ -14,7 +22,7 @@ export default function Exito() {
 
   function registrarOtro() {
     reset();
-    navigate('/tramos');
+    navigate(origen);
   }
 
   return (
@@ -47,21 +55,19 @@ export default function Exito() {
           <path d="M20 6L9 17l-5-5" stroke="#fff" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
-      <div style={{ fontSize: 23, fontWeight: 800, color: '#fff', marginTop: 26 }}>
-        Tramo registrado
-        <br />
-        correctamente
+      <div data-testid="exito-titulo" style={{ fontSize: 23, fontWeight: 800, color: '#fff', marginTop: 26, whiteSpace: 'pre-line' }}>
+        {titulo}
       </div>
-      <div style={{ fontSize: 14, color: 'rgba(255,255,255,.7)', marginTop: 12, lineHeight: 1.5 }}>
-        Tramo {lastFlight.tramo_n} · {lastFlight.nombre}
+      <div data-testid="exito-detalle" style={{ fontSize: 14, color: 'rgba(255,255,255,.7)', marginTop: 12, lineHeight: 1.5 }}>
+        {detalle}
         <br />
         registrado en la bitácora del día
       </div>
-      <button onClick={volverInicio} className="btn btn-primary" style={{ marginTop: 40, width: '100%' }}>
+      <button data-testid="exito-volver" onClick={volverInicio} className="btn btn-primary" style={{ marginTop: 40, width: '100%' }}>
         Volver al inicio
       </button>
-      <button onClick={registrarOtro} className="btn-ghost btn" style={{ marginTop: 12, color: 'rgba(255,255,255,.75)', background: 'transparent' }}>
-        Registrar otro tramo
+      <button data-testid="exito-registrar-otro" onClick={registrarOtro} className="btn-ghost btn" style={{ marginTop: 12, color: 'rgba(255,255,255,.75)', background: 'transparent' }}>
+        {textoRegistrarOtro}
       </button>
     </div>
   );

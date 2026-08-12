@@ -17,12 +17,12 @@ export function blankForm() {
   };
 }
 
-export function RegistroProvider({ children }) {
+export function RegistroProvider({ children, initialLastFlight = null }) {
   const [selectedTramo, setSelectedTramo] = useState(null);
   const [selectedPdo, setSelectedPdo] = useState(null);
   const [selectedTipoVuelo, setSelectedTipoVuelo] = useState(null);
   const [form, setForm] = useState(blankForm());
-  const [lastFlight, setLastFlight] = useState(null);
+  const [lastFlight, setLastFlight] = useState(initialLastFlight);
 
   function startRegistro(tramo, pdoRow = null) {
     setSelectedTramo(tramo);
