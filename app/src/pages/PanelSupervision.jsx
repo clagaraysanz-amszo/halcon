@@ -174,45 +174,6 @@ export default function PanelSupervision() {
           </button>
         )}
 
-        <div className="card" style={{ padding: 16 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--texto-titulo)', marginBottom: 13 }}>
-            Cumplimiento por funcionario {esHoy ? 'en turno' : `· ${formatFechaLabel(fecha)}`}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-            {porTurno.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--texto-tenue)' }}>{esHoy ? 'Nadie en turno hoy.' : 'Sin PDO cargado para esta fecha.'}</div>}
-            {porTurno.map(({ turno, operadoresTurno }) =>
-              operadoresTurno.map((op) => (
-                <div key={`${turno}-${op.halconN}`} style={{ border: '1px solid var(--fondo-app)', borderRadius: 13, overflow: 'hidden' }}>
-                  <div style={{ background: '#F7F9FC', padding: '10px 13px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid var(--fondo-app)' }}>
-                    <div style={{ width: 30, height: 30, flex: 'none', borderRadius: 9, background: 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800 }}>
-                      {turno}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--texto-titulo)' }}>Halcón {op.halconN} · {op.nombre}</div>
-                      <div style={{ fontSize: 10.5, color: 'var(--texto-tenue)', fontWeight: 600 }}>{TURNOS[turno].label} · {TURNOS[turno].horas}</div>
-                    </div>
-                    <span className={`badge ${op.done === op.total ? 'badge--done' : 'badge--pend'}`}>{op.done}/{op.total}</span>
-                  </div>
-                  <div style={{ padding: '6px 13px 9px', display: 'flex', flexDirection: 'column' }}>
-                    {op.entries.map((e) => (
-                      <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0' }}>
-                        <span style={{ width: 16, flex: 'none', textAlign: 'center', fontSize: 13, fontWeight: 800, color: e.estado === 'Realizado' ? 'var(--verde-ok)' : 'var(--texto-tenue)' }}>
-                          {e.estado === 'Realizado' ? '✓' : '○'}
-                        </span>
-                        <span style={{ flex: 'none', fontSize: 10.5, fontWeight: 700, color: 'var(--texto-tenue)', width: 50 }}>{e.hora}</span>
-                        <span style={{ flex: 1, minWidth: 0, fontSize: 11.5, fontWeight: 600, color: 'var(--texto-titulo)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          Tramo {e.tramo_n} · {tramosByN.get(e.tramo_n)?.nombre ?? '—'}
-                        </span>
-                        <span style={{ flex: 'none', fontSize: 10, fontWeight: 700, color: e.estado === 'Realizado' ? 'var(--verde-ok)' : 'var(--ambar-texto)' }}>{e.estado}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div className="card" style={{ padding: '14px 15px' }}>
             <div className="kpi-value" style={{ fontSize: 27 }}>{day.flights.length}</div>
@@ -317,15 +278,27 @@ export default function PanelSupervision() {
                     const colorEstado = esRealizado ? 'var(--verde-ok)' : esNoRealizado ? '#E53E3E' : 'var(--ambar-texto)';
                     const iconColor = esRealizado ? 'var(--verde-ok)' : 'var(--texto-tenue)';
                     return (
-                      <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0', marginTop: 2, borderRadius: 8, background: colorFondo, border: colorBorde !== 'transparent' ? `1px solid ${colorBorde}` : 'none', paddingLeft: colorFondo !== 'transparent' ? 9 : 0, paddingRight: colorFondo !== 'transparent' ? 9 : 0 }}>
-                        <span style={{ width: 16, flex: 'none', textAlign: 'center', fontSize: 13, fontWeight: 800, color: iconColor }}>
-                          {esRealizado ? '✓' : esNoRealizado ? '✗' : '○'}
-                        </span>
-                        <span style={{ flex: 'none', fontSize: 10.5, fontWeight: 700, color: 'var(--texto-tenue)', width: 44 }}>{r.hora}</span>
-                        <span style={{ flex: 1, minWidth: 0, fontSize: 11.5, fontWeight: 600, color: 'var(--texto-titulo)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          Tramo {r.tramo_n} · {tramo?.nombre ?? '—'}
-                        </span>
-                        <span style={{ flex: 'none', fontSize: 10, fontWeight: 700, color: colorEstado }}>{r.estado}</span>
+                      <div key={r.id} style={{ marginTop: 2, borderRadius: 8, background: colorFondo, border: colorBorde !== 'transparent' ? `1px solid ${colorBorde}` : 'none', padding: colorFondo !== 'transparent' ? '6px 9px' : '6px 0' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                          <span style={{ width: 16, flex: 'none', textAlign: 'center', fontSize: 13, fontWeight: 800, color: iconColor }}>
+                            {esRealizado ? '✓' : esNoRealizado ? '✗' : '○'}
+                          </span>
+                          <span style={{ flex: 'none', fontSize: 10.5, fontWeight: 700, color: 'var(--texto-tenue)', width: 44 }}>{r.hora}</span>
+                          <span style={{ flex: 1, minWidth: 0, fontSize: 11.5, fontWeight: 600, color: 'var(--texto-titulo)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            Tramo {r.tramo_n} · {tramo?.nombre ?? '—'}
+                          </span>
+                          <span style={{ flex: 'none', fontSize: 10, fontWeight: 700, color: colorEstado }}>{r.estado}</span>
+                        </div>
+                        {esNoRealizado && r.motivo && (
+                          <div style={{ marginTop: 5, marginLeft: 25, padding: '5px 9px', background: '#fff', borderRadius: 7, border: '1px solid #FED7D7', fontSize: 11, color: 'var(--texto-secundario)', fontStyle: 'italic' }}>
+                            Motivo: {r.motivo}
+                          </div>
+                        )}
+                        {esNoRealizado && !r.motivo && (
+                          <div style={{ marginTop: 5, marginLeft: 25, fontSize: 10.5, color: '#E53E3E', fontStyle: 'italic' }}>
+                            Sin motivo registrado
+                          </div>
+                        )}
                       </div>
                     );
                   })}
