@@ -67,9 +67,29 @@ export default function PanelSupervision() {
       .sort((a, b) => b.count - a.count);
   }, [day.pdoRows, day.flights]);
 
-  const noRealizados = useMemo(() => {
-    return day.pdoRows.filter((r) => r.estado !== 'Realizado');
-  }, [day.pdoRows]);
+  const estadoSobrevuelos = useMemo(() => {
+    const turnoOrder = { A: 0, B: 1, N: 2 };
+    const sorted = [...day.pdoRows].sort((a, b) => {
+      const tDiff = (turnoOrder[a.turno] ?? 3) - (turnoOrder[b.turno] ?? 3);
+      if (tDiff !== 0) return tDiff;
+      const hDiff = a.halcon_n.localeCompare(b.halcon_n, undefined, { numeric: true });
+      if (hDiff !== 0) return hDiff;
+      return compararHoraTurno(a.hora, b.hora, a.turno);
+    });
+    const groups = [];
+    let current = null;
+    sorted.forEach((r) => {
+      const key = `${r.turno}-${r.halcon_n}`;
+      if (!current || current.key !== key) {
+        current = { key, turno: r.turno, halconN: r.halcon_n, nombre: operadoresByHalcon.get(r.halcon_n)?.nombre ?? r.halcon_n, entries: [] };
+        groups.push(current);
+      }
+      current.entries.push(r);
+    });
+    return groups;
+  }, [day.pdoRows, operadoresByHalcon]);
+
+  const noRealizadosCount = day.pdoRows.filter((r) => r.estado !== 'Realizado').length;
 
   const recentFlights = day.flights.slice(0, 6);
   const totalHoras = (day.totalMinutos / 60).toFixed(1);
@@ -258,48 +278,60 @@ export default function PanelSupervision() {
 
         <div className="card" style={{ padding: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--texto-titulo)' }}>Vuelos no realizados</div>
-            {noRealizados.length > 0 && (
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--texto-titulo)' }}>Estado de sobrevuelos</div>
+            {noRealizadosCount > 0 && (
               <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#E53E3E', padding: '3px 9px', borderRadius: 12 }}>
-                {noRealizados.length}
+                {noRealizadosCount} pendientes
               </span>
             )}
           </div>
-          {noRealizados.length === 0 && (
-            <div style={{ fontSize: 12.5, color: 'var(--verde-ok)', fontWeight: 600, padding: '8px 0' }}>
-              {day.pdoTotal > 0 ? '✓ Todos los sobrevuelos fueron realizados' : (esHoy ? 'Sin PDO cargado.' : 'Sin PDO para esta fecha.')}
+          {estadoSobrevuelos.length === 0 && (
+            <div style={{ fontSize: 12.5, color: 'var(--texto-tenue)', fontWeight: 600, padding: '8px 0' }}>
+              {esHoy ? 'Sin PDO cargado.' : 'Sin PDO para esta fecha.'}
             </div>
           )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {noRealizados.map((r) => {
-              const tramo = tramosByN.get(r.tramo_n);
-              const op = operadoresByHalcon.get(r.halcon_n);
-              return (
-                <div key={r.id} style={{ border: '1px solid #FED7D7', borderRadius: 11, padding: '10px 12px', background: '#FFF5F5' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                    <div style={{ width: 30, height: 30, flex: 'none', borderRadius: 8, background: '#E53E3E', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>
-                      {r.turno}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--texto-titulo)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        Halcón {r.halcon_n} · {op?.nombre ?? '—'}
-                      </div>
-                      <div style={{ fontSize: 10.5, color: 'var(--texto-secundario)' }}>
-                        {r.hora} · Tramo {r.tramo_n} · {tramo?.nombre ?? '—'}
-                      </div>
-                    </div>
-                    <span style={{ flex: 'none', fontSize: 10, fontWeight: 700, color: r.estado === 'No realizado' ? '#E53E3E' : 'var(--ambar-texto)' }}>
-                      {r.estado}
-                    </span>
+          {noRealizadosCount === 0 && day.pdoTotal > 0 && (
+            <div style={{ fontSize: 12.5, color: 'var(--verde-ok)', fontWeight: 600, padding: '0 0 10px' }}>
+              ✓ Todos los sobrevuelos fueron realizados
+            </div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {estadoSobrevuelos.map((group) => (
+              <div key={group.key} style={{ border: '1px solid var(--fondo-app)', borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ background: '#F7F9FC', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: '1px solid var(--fondo-app)' }}>
+                  <div style={{ width: 28, height: 28, flex: 'none', borderRadius: 8, background: 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800 }}>
+                    {group.turno}
                   </div>
-                  {r.motivo && (
-                    <div style={{ marginTop: 6, padding: '6px 9px', background: '#fff', borderRadius: 7, border: '1px solid #FED7D7', fontSize: 11.5, color: 'var(--texto-secundario)', fontStyle: 'italic' }}>
-                      Motivo: {r.motivo}
-                    </div>
-                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--texto-titulo)' }}>Halcón {group.halconN} · {group.nombre}</div>
+                    <div style={{ fontSize: 10, color: 'var(--texto-tenue)', fontWeight: 600 }}>{TURNOS[group.turno].label} · {TURNOS[group.turno].horas}</div>
+                  </div>
                 </div>
-              );
-            })}
+                <div style={{ padding: '4px 12px 8px' }}>
+                  {group.entries.map((r) => {
+                    const tramo = tramosByN.get(r.tramo_n);
+                    const esRealizado = r.estado === 'Realizado';
+                    const esNoRealizado = r.estado === 'No realizado';
+                    const colorFondo = esRealizado ? '#F0FFF4' : esNoRealizado ? '#FFF5F5' : 'transparent';
+                    const colorBorde = esRealizado ? '#C6F6D5' : esNoRealizado ? '#FED7D7' : 'transparent';
+                    const colorEstado = esRealizado ? 'var(--verde-ok)' : esNoRealizado ? '#E53E3E' : 'var(--ambar-texto)';
+                    const iconColor = esRealizado ? 'var(--verde-ok)' : 'var(--texto-tenue)';
+                    return (
+                      <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 0', marginTop: 2, borderRadius: 8, background: colorFondo, border: colorBorde !== 'transparent' ? `1px solid ${colorBorde}` : 'none', paddingLeft: colorFondo !== 'transparent' ? 9 : 0, paddingRight: colorFondo !== 'transparent' ? 9 : 0 }}>
+                        <span style={{ width: 16, flex: 'none', textAlign: 'center', fontSize: 13, fontWeight: 800, color: iconColor }}>
+                          {esRealizado ? '✓' : esNoRealizado ? '✗' : '○'}
+                        </span>
+                        <span style={{ flex: 'none', fontSize: 10.5, fontWeight: 700, color: 'var(--texto-tenue)', width: 44 }}>{r.hora}</span>
+                        <span style={{ flex: 1, minWidth: 0, fontSize: 11.5, fontWeight: 600, color: 'var(--texto-titulo)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          Tramo {r.tramo_n} · {tramo?.nombre ?? '—'}
+                        </span>
+                        <span style={{ flex: 'none', fontSize: 10, fontWeight: 700, color: colorEstado }}>{r.estado}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

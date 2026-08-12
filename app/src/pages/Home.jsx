@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useOperatorDay } from '../hooks/useOperatorDay';
+import { useWeeklyStats } from '../hooks/useWeeklyStats';
 import { TURNOS, formatFechaCorta } from '../lib/turnos';
 import logo from '../assets/logo.png';
 
@@ -8,8 +9,10 @@ export default function Home() {
   const { operador, signOut } = useAuth();
   const navigate = useNavigate();
   const day = useOperatorDay(operador.halcon_n);
+  const { stats: weekly } = useWeeklyStats(operador.halcon_n);
   const turnoInfo = day.turno ? TURNOS[day.turno] : null;
   const nextPend = day.pdoRows.find((r) => r.estado === 'Pendiente');
+  const todayISO = day.fecha;
 
   return (
     <div className="screen">
@@ -279,6 +282,54 @@ export default function Home() {
           </div>
           <span style={{ color: '#B8C0CC', fontSize: 18 }}>›</span>
         </button>
+
+        {weekly && (
+          <div className="card" style={{ padding: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--texto-titulo)', marginBottom: 4 }}>Tu semana</div>
+            <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', fontWeight: 600, marginBottom: 14 }}>Resumen semanal de actividad</div>
+
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 80, marginBottom: 8 }}>
+              {weekly.days.map((d) => {
+                const maxV = Math.max(1, ...weekly.days.map((x) => x.vuelos));
+                const h = Math.max(4, (d.vuelos / maxV) * 68);
+                const esHoy = d.fecha === todayISO;
+                return (
+                  <div key={d.fecha} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: d.vuelos > 0 ? 'var(--texto-titulo)' : 'var(--texto-tenue)' }}>{d.vuelos || ''}</span>
+                    <div style={{ width: '100%', height: h, borderRadius: 6, background: esHoy ? 'var(--naranjo)' : d.vuelos > 0 ? 'var(--azul)' : '#E8ECF1', transition: 'height .5s ease' }} />
+                    <span style={{ fontSize: 9.5, fontWeight: esHoy ? 800 : 600, color: esHoy ? 'var(--naranjo)' : 'var(--texto-tenue)' }}>{d.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 12 }}>
+              <div style={{ textAlign: 'center', padding: '10px 0', background: '#F7F9FC', borderRadius: 10 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--azul)' }}>{weekly.totalVuelos}</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--texto-tenue)', marginTop: 2 }}>Vuelos</div>
+              </div>
+              <div style={{ textAlign: 'center', padding: '10px 0', background: '#F7F9FC', borderRadius: 10 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--naranjo)' }}>{(weekly.totalMinutos / 60).toFixed(1)}h</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--texto-tenue)', marginTop: 2 }}>Horas vuelo</div>
+              </div>
+              <div style={{ textAlign: 'center', padding: '10px 0', background: '#F7F9FC', borderRadius: 10 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: weekly.tasaCumplimiento >= 80 ? 'var(--verde-ok)' : 'var(--ambar-texto)' }}>{weekly.tasaCumplimiento}%</div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--texto-tenue)', marginTop: 2 }}>Cumplimiento</div>
+              </div>
+            </div>
+
+            {weekly.tasaCumplimiento === 100 && weekly.totalAsignados > 0 && (
+              <div style={{ marginTop: 12, padding: '10px 14px', background: '#F0FFF4', border: '1px solid #C6F6D5', borderRadius: 10, fontSize: 12, fontWeight: 700, color: '#276749', textAlign: 'center' }}>
+                Excelente — 100% de cumplimiento esta semana
+              </div>
+            )}
+            {weekly.tasaCumplimiento >= 80 && weekly.tasaCumplimiento < 100 && weekly.totalAsignados > 0 && (
+              <div style={{ marginTop: 12, padding: '10px 14px', background: '#F7F9FC', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 12, fontWeight: 700, color: 'var(--texto-titulo)', textAlign: 'center' }}>
+                Buen trabajo — {weekly.totalRealizados} de {weekly.totalAsignados} tramos completados
+              </div>
+            )}
+          </div>
+        )}
 
         <button onClick={signOut} className="btn-danger-ghost btn" style={{ marginTop: 4 }}>
           Cerrar Sesión
