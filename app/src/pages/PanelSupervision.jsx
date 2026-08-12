@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCatalog } from '../context/CatalogContext';
 import { useSupervisorDay } from '../hooks/useSupervisorDay';
+import { useSupervisorWeekly } from '../hooks/useSupervisorWeekly';
 import { TURNOS, compararHoraTurno, fechaOperativaHoy, toISODate } from '../lib/turnos';
 import { googleMapsUrl } from '../lib/geo';
 
@@ -34,6 +35,7 @@ export default function PanelSupervision() {
   const [fecha, setFecha] = useState(hoy);
   const esHoy = fecha === hoy;
   const day = useSupervisorDay(fecha);
+  const { data: weekly } = useSupervisorWeekly(fecha);
 
   const porTurno = useMemo(() => {
     const groups = { A: [], B: [], N: [] };
@@ -364,6 +366,64 @@ export default function PanelSupervision() {
             </div>
           )}
         </div>
+
+        {weekly && weekly.porOperador.length > 0 && (
+          <div className="card" style={{ padding: 16 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--texto-titulo)', marginBottom: 3 }}>Resumen semanal</div>
+            <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', fontWeight: 600, marginBottom: 14 }}>Semana {weekly.semanaLabel}</div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {weekly.porOperador.map((op) => {
+                const nombre = operadoresByHalcon.get(op.halconN)?.nombre ?? op.halconN;
+                const maxVuelos = Math.max(1, ...weekly.porOperador.map((o) => o.totalVuelos));
+                return (
+                  <div key={op.halconN} style={{ border: '1px solid var(--fondo-app)', borderRadius: 12, overflow: 'hidden' }}>
+                    <div style={{ background: '#F7F9FC', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: '1px solid var(--fondo-app)' }}>
+                      <div style={{ width: 28, height: 28, flex: 'none', borderRadius: 8, background: 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800 }}>
+                        {op.halconN}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--texto-titulo)' }}>Halcón {op.halconN} · {nombre}</div>
+                      </div>
+                      {op.tasa !== null && (
+                        <span style={{ fontSize: 11, fontWeight: 800, color: op.tasa >= 80 ? 'var(--verde-ok)' : op.tasa >= 50 ? 'var(--ambar-texto)' : '#E53E3E', background: op.tasa >= 80 ? '#F0FFF4' : op.tasa >= 50 ? '#FFFBEB' : '#FFF5F5', padding: '3px 8px', borderRadius: 10 }}>
+                          {op.tasa}%
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ padding: '10px 12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 44, marginBottom: 8 }}>
+                        {op.days.map((d) => {
+                          const h = Math.max(3, (d.vuelos / maxVuelos) * 36);
+                          return (
+                            <div key={d.fecha} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                              {d.vuelos > 0 && <span style={{ fontSize: 8.5, fontWeight: 800, color: 'var(--texto-titulo)' }}>{d.vuelos}</span>}
+                              <div style={{ width: '100%', height: h, borderRadius: 4, background: d.vuelos > 0 ? 'var(--azul)' : '#E8ECF1' }} />
+                              <span style={{ fontSize: 8, fontWeight: 600, color: 'var(--texto-tenue)' }}>{d.label}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, fontSize: 10.5, color: 'var(--texto-secundario)', fontWeight: 600 }}>
+                        <span>{op.totalVuelos} vuelos</span>
+                        <span>·</span>
+                        <span>{(op.totalMinutos / 60).toFixed(1)}h</span>
+                        <span>·</span>
+                        <span>{op.totalRealizados}/{op.totalAsignados} tramos</span>
+                        {op.totalNoRealizados > 0 && (
+                          <>
+                            <span>·</span>
+                            <span style={{ color: '#E53E3E' }}>{op.totalNoRealizados} no realiz.</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
