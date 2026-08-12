@@ -122,6 +122,7 @@ export default function ResumenSemanal() {
             <div key={op.halconN} className="card" style={{ padding: 0, overflow: 'hidden' }}>
               <button
                 onClick={() => toggleExpand(op.halconN)}
+                data-testid={`toggle-${op.halconN}`}
                 style={{ width: '100%', background: '#F7F9FC', padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 10, border: 'none', borderBottom: isOpen ? '1px solid var(--fondo-app)' : 'none', cursor: 'pointer', textAlign: 'left' }}
               >
                 <div style={{ width: 32, height: 32, flex: 'none', borderRadius: 9, background: 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800 }}>
@@ -140,24 +141,27 @@ export default function ResumenSemanal() {
               </button>
 
               <div style={{ padding: '12px 14px' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 48, marginBottom: 4 }}>
+                {/* Solo lectura: no navega. Botones diminutos aquí, pegados al
+                    encabezado tocable, provocaban salidas accidentales al panel
+                    diario cuando el usuario solo quería expandir la tarjeta. */}
+                <div data-testid={`mini-chart-${op.halconN}`} style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 48, marginBottom: 4, pointerEvents: 'none' }}>
                   {op.days.map((d) => {
                     const h = Math.max(3, (d.vuelos / maxVuelos) * 38);
                     const esHoyCol = d.fecha === hoy;
                     return (
-                      <button
-                        key={d.fecha}
-                        onClick={() => verDia(d.fecha)}
-                        disabled={d.vuelos === 0 && d.asignados === 0}
-                        style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', padding: 0, cursor: (d.vuelos > 0 || d.asignados > 0) ? 'pointer' : 'default' }}
-                      >
+                      <div key={d.fecha} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
                         <span style={{ fontSize: 9, fontWeight: 800, color: d.vuelos > 0 ? 'var(--texto-titulo)' : 'var(--texto-tenue)' }}>{d.vuelos || ''}</span>
                         <div style={{ width: '100%', height: h, borderRadius: 5, background: esHoyCol ? 'var(--naranjo)' : d.vuelos > 0 ? 'var(--azul)' : '#E8ECF1', transition: 'height .4s ease' }} />
                         <span style={{ fontSize: 9, fontWeight: esHoyCol ? 800 : 600, color: esHoyCol ? 'var(--naranjo)' : 'var(--texto-tenue)' }}>{d.label}</span>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
+                {!isOpen && (
+                  <div style={{ fontSize: 10, color: 'var(--texto-tenue)', fontWeight: 600, textAlign: 'center', marginBottom: 2 }}>
+                    Toca para ver el detalle por día
+                  </div>
+                )}
 
                 {!isOpen && op.totalNoRealizados > 0 && (
                   <div style={{ marginTop: 8, fontSize: 11, fontWeight: 700, color: '#E53E3E' }}>
@@ -178,6 +182,7 @@ export default function ResumenSemanal() {
                           key={d.fecha}
                           onClick={() => tieneDatos && verDia(d.fecha)}
                           disabled={!tieneDatos}
+                          data-testid={`dia-${op.halconN}-${d.fecha}`}
                           style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px', borderRadius: 9, background: bg, border: 'none', cursor: tieneDatos ? 'pointer' : 'default', textAlign: 'left', width: '100%' }}
                         >
                           <span style={{ width: 62, flex: 'none', fontSize: 11, fontWeight: 700, color: 'var(--texto-secundario)' }}>{formatFechaLarga(d.fecha)}</span>
