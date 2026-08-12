@@ -14,13 +14,13 @@ const CLAVE_OPERADOR = 'HalconLB-2026';
 // Etiquetas de los botones (solo visuales; el login funciona por número aunque
 // cambie el nombre). Se mantienen alineadas con la tabla `operadores`.
 const HALCONES = [
-  { n: '1', nombre: 'Carlos Tapia' },
-  { n: '2', nombre: 'Ahmed Allami' },
-  { n: '3', nombre: 'José Correa' },
-  { n: '4', nombre: 'Esteban Cáceres' },
-  { n: '5', nombre: 'Sebastián Castillo' },
-  { n: '6', nombre: 'Miguel Gallardo' },
-  { n: '7', nombre: 'Juan Gutiérrez' },
+  { n: '1' },
+  { n: '2' },
+  { n: '3' },
+  { n: '4' },
+  { n: '5' },
+  { n: '6' },
+  { n: '7' },
 ];
 
 export default function Login() {
@@ -137,8 +137,7 @@ export default function Login() {
                     {h.n}
                   </span>
                   <span style={{ minWidth: 0 }}>
-                    <span style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: '#16233F' }}>Halcón {h.n}</span>
-                    <span style={{ display: 'block', fontSize: 10.5, color: '#8B93A1', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.nombre}</span>
+                    <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#16233F' }}>Halcón {h.n}</span>
                   </span>
                 </button>
               ))}
