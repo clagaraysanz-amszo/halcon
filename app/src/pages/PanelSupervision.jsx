@@ -9,6 +9,7 @@ import { googleMapsUrl } from '../lib/geo';
 const TURNO_OPTS = ['A', 'B', 'N'];
 const DIAS_SEM = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+const MAX_VUELOS_INICIALES = 4;
 
 function parseFecha(str) {
   const [y, m, d] = str.split('-').map(Number);
@@ -92,66 +93,63 @@ export default function PanelSupervision() {
 
   const noRealizadosCount = day.pdoRows.filter((r) => r.estado !== 'Realizado').length;
 
-  const recentFlights = day.flights.slice(0, 6);
+  const [estadoOpen, setEstadoOpen] = useState(false);
+  const [vuelosOpen, setVuelosOpen] = useState(false);
+
+  const recentFlights = day.flights.slice(0, vuelosOpen ? undefined : MAX_VUELOS_INICIALES);
+  const hayMasVuelos = day.flights.length > MAX_VUELOS_INICIALES;
   const totalHoras = (day.totalMinutos / 60).toFixed(1);
   const ringPct = day.pdoTotal ? day.pdoDone / day.pdoTotal : 0;
   const ringOffset = (251.3 * (1 - ringPct)).toFixed(1);
 
   return (
     <div className="screen">
-      <div className="header header--supervisor">
+      <div className="header header--supervisor" style={{ padding: '10px 16px 10px' }}>
         <div className="header-row">
           <button className="back-btn" onClick={() => navigate('/inicio')} aria-label="Volver">
             ‹
           </button>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 11, color: '#EE6B1E', fontWeight: 700, letterSpacing: 1.5 }}>PANEL DE SUPERVISIÓN</div>
-            <div className="header-title">{esHoy ? 'Operación en tiempo real' : 'Revisión histórica'}</div>
+            <div className="header-title" style={{ fontSize: 15 }}>{esHoy ? 'Operación en tiempo real' : 'Revisión histórica'}</div>
           </div>
-          {esHoy && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: '#3FD07A', flex: 'none' }}>
-              <span className="status-dot" style={{ background: '#3FD07A', boxShadow: '0 0 0 3px rgba(63,208,122,.2)' }} />
-              EN VIVO
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 'none' }}>
+            {esHoy && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 10, fontWeight: 700, color: '#3FD07A' }}>
+                <span className="status-dot" style={{ background: '#3FD07A', boxShadow: '0 0 0 3px rgba(63,208,122,.2)' }} />
+                EN VIVO
+              </div>
+            )}
+            <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--naranjo)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>
+              {operador.nombre.split(' ').map((w) => w[0]).join('').slice(0, 2)}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Navegación por fecha */}
-        <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
+        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
           <button
             onClick={() => setFecha(addDaysStr(fecha, -1))}
-            style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 18, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             ‹
           </button>
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: 14.5, color: '#fff', fontWeight: 700 }}>{formatFechaLabel(fecha)}</div>
-            <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,.55)', fontWeight: 600 }}>{fecha}</div>
+            <div style={{ fontSize: 13.5, color: '#fff', fontWeight: 700 }}>{formatFechaLabel(fecha)}</div>
           </div>
           <button
             onClick={() => setFecha(addDaysStr(fecha, 1))}
-            style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 18, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             ›
           </button>
-        </div>
-        {!esHoy && (
-          <button
-            onClick={() => setFecha(hoy)}
-            style={{ marginTop: 6, width: '100%', padding: '7px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,.25)', background: 'rgba(255,255,255,.1)', color: '#fff', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}
-          >
-            Volver a hoy
-          </button>
-        )}
-
-        <div style={{ marginTop: 10, width: '100%', background: 'rgba(255,255,255,.09)', border: '1px solid rgba(255,255,255,.14)', borderRadius: 13, padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 11 }}>
-          <div style={{ width: 38, height: 38, borderRadius: 11, background: 'var(--naranjo)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 800 }}>
-            {operador.nombre.split(' ').map((w) => w[0]).join('').slice(0, 2)}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,.55)', fontWeight: 600 }}>Supervisor a cargo · {operador.halcon_n}</div>
-            <div style={{ fontSize: 14.5, color: '#fff', fontWeight: 700 }}>{operador.nombre}</div>
-          </div>
+          {!esHoy && (
+            <button
+              onClick={() => setFecha(hoy)}
+              style={{ padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,.25)', background: 'rgba(255,255,255,.1)', color: '#fff', fontSize: 10.5, fontWeight: 700, cursor: 'pointer', flex: 'none' }}
+            >
+              Hoy
+            </button>
+          )}
         </div>
       </div>
 
@@ -253,80 +251,96 @@ export default function PanelSupervision() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--texto-titulo)' }}>Estado de sobrevuelos</div>
-            {noRealizadosCount > 0 && (
-              <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#E53E3E', padding: '3px 9px', borderRadius: 12 }}>
-                {noRealizadosCount} pendientes
-              </span>
-            )}
-          </div>
-          {estadoSobrevuelos.length === 0 && (
-            <div style={{ fontSize: 12.5, color: 'var(--texto-tenue)', fontWeight: 600, padding: '8px 0' }}>
-              {esHoy ? 'Sin PDO cargado.' : 'Sin PDO para esta fecha.'}
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <button
+            onClick={() => setEstadoOpen(!estadoOpen)}
+            style={{ width: '100%', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, border: 'none', background: estadoOpen ? '#F7F9FC' : 'var(--superficie)', cursor: 'pointer', textAlign: 'left', borderBottom: estadoOpen ? '1px solid var(--borde-1)' : 'none' }}
+          >
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--texto-titulo)', flex: 1 }}>Estado de sobrevuelos</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 'none' }}>
+              {noRealizadosCount > 0 && (
+                <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', background: '#E53E3E', padding: '2px 8px', borderRadius: 10 }}>
+                  {noRealizadosCount} pend.
+                </span>
+              )}
+              {noRealizadosCount === 0 && day.pdoTotal > 0 && (
+                <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', background: 'var(--verde-ok)', padding: '2px 8px', borderRadius: 10 }}>
+                  Todo OK
+                </span>
+              )}
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--texto-tenue)' }}>{day.pdoDone}/{day.pdoTotal}</span>
+              <span style={{ fontSize: 12, color: 'var(--texto-tenue)', transform: estadoOpen ? 'rotate(90deg)' : 'none', transition: 'transform .2s' }}>›</span>
             </div>
-          )}
-          {noRealizadosCount === 0 && day.pdoTotal > 0 && (
-            <div style={{ fontSize: 12.5, color: 'var(--verde-ok)', fontWeight: 600, padding: '0 0 10px' }}>
-              ✓ Todos los sobrevuelos fueron realizados
-            </div>
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {estadoSobrevuelos.map((group) => (
-              <div key={group.key} style={{ border: '1px solid var(--fondo-app)', borderRadius: 12, overflow: 'hidden' }}>
-                <div style={{ background: '#F7F9FC', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: '1px solid var(--fondo-app)' }}>
-                  <div style={{ width: 28, height: 28, flex: 'none', borderRadius: 8, background: 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800 }}>
-                    {group.turno}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--texto-titulo)' }}>Halcón {group.halconN} · {group.nombre}</div>
-                    <div style={{ fontSize: 10, color: 'var(--texto-tenue)', fontWeight: 600 }}>{TURNOS[group.turno].label} · {TURNOS[group.turno].horas}</div>
-                  </div>
+          </button>
+          {estadoOpen && (
+            <div style={{ padding: '8px 12px 12px' }}>
+              {estadoSobrevuelos.length === 0 && (
+                <div style={{ fontSize: 12.5, color: 'var(--texto-tenue)', fontWeight: 600, padding: '8px 0' }}>
+                  {esHoy ? 'Sin PDO cargado.' : 'Sin PDO para esta fecha.'}
                 </div>
-                <div style={{ padding: '4px 12px 8px' }}>
-                  {group.entries.map((r) => {
-                    const tramo = tramosByN.get(r.tramo_n);
-                    const esRealizado = r.estado === 'Realizado';
-                    const esNoRealizado = r.estado === 'No realizado';
-                    const colorFondo = esRealizado ? '#F0FFF4' : esNoRealizado ? '#FFF5F5' : 'transparent';
-                    const colorBorde = esRealizado ? '#C6F6D5' : esNoRealizado ? '#FED7D7' : 'transparent';
-                    const colorEstado = esRealizado ? 'var(--verde-ok)' : esNoRealizado ? '#E53E3E' : 'var(--ambar-texto)';
-                    const iconColor = esRealizado ? 'var(--verde-ok)' : 'var(--texto-tenue)';
-                    return (
-                      <div key={r.id} style={{ marginTop: 2, borderRadius: 8, background: colorFondo, border: colorBorde !== 'transparent' ? `1px solid ${colorBorde}` : 'none', padding: colorFondo !== 'transparent' ? '6px 9px' : '6px 0' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                          <span style={{ width: 16, flex: 'none', textAlign: 'center', fontSize: 13, fontWeight: 800, color: iconColor }}>
-                            {esRealizado ? '✓' : esNoRealizado ? '✗' : '○'}
-                          </span>
-                          <span style={{ flex: 'none', fontSize: 10.5, fontWeight: 700, color: 'var(--texto-tenue)', width: 44 }}>{r.hora}</span>
-                          <span style={{ flex: 1, minWidth: 0, fontSize: 11.5, fontWeight: 600, color: 'var(--texto-titulo)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            Tramo {r.tramo_n} · {tramo?.nombre ?? '—'}
-                          </span>
-                          <span style={{ flex: 'none', fontSize: 10, fontWeight: 700, color: colorEstado }}>{r.estado}</span>
-                        </div>
-                        {esNoRealizado && r.motivo && (
-                          <div style={{ marginTop: 5, marginLeft: 25, padding: '5px 9px', background: '#fff', borderRadius: 7, border: '1px solid #FED7D7', fontSize: 11, color: 'var(--texto-secundario)', fontStyle: 'italic' }}>
-                            Motivo: {r.motivo}
-                          </div>
-                        )}
-                        {esNoRealizado && !r.motivo && (
-                          <div style={{ marginTop: 5, marginLeft: 25, fontSize: 10.5, color: '#E53E3E', fontStyle: 'italic' }}>
-                            Sin motivo registrado
-                          </div>
-                        )}
+              )}
+              {noRealizadosCount === 0 && day.pdoTotal > 0 && (
+                <div style={{ fontSize: 12.5, color: 'var(--verde-ok)', fontWeight: 600, padding: '0 0 10px' }}>
+                  ✓ Todos los sobrevuelos fueron realizados
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {estadoSobrevuelos.map((group) => (
+                  <div key={group.key} style={{ border: '1px solid var(--fondo-app)', borderRadius: 12, overflow: 'hidden' }}>
+                    <div style={{ background: '#F7F9FC', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 9, borderBottom: '1px solid var(--fondo-app)' }}>
+                      <div style={{ width: 28, height: 28, flex: 'none', borderRadius: 8, background: 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800 }}>
+                        {group.turno}
                       </div>
-                    );
-                  })}
-                </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--texto-titulo)' }}>Halcón {group.halconN} · {group.nombre}</div>
+                        <div style={{ fontSize: 10, color: 'var(--texto-tenue)', fontWeight: 600 }}>{TURNOS[group.turno].label} · {TURNOS[group.turno].horas}</div>
+                      </div>
+                    </div>
+                    <div style={{ padding: '4px 12px 8px' }}>
+                      {group.entries.map((r) => {
+                        const tramo = tramosByN.get(r.tramo_n);
+                        const esRealizado = r.estado === 'Realizado';
+                        const esNoRealizado = r.estado === 'No realizado';
+                        const colorFondo = esRealizado ? '#F0FFF4' : esNoRealizado ? '#FFF5F5' : 'transparent';
+                        const colorBorde = esRealizado ? '#C6F6D5' : esNoRealizado ? '#FED7D7' : 'transparent';
+                        const colorEstado = esRealizado ? 'var(--verde-ok)' : esNoRealizado ? '#E53E3E' : 'var(--ambar-texto)';
+                        const iconColor = esRealizado ? 'var(--verde-ok)' : 'var(--texto-tenue)';
+                        return (
+                          <div key={r.id} style={{ marginTop: 2, borderRadius: 8, background: colorFondo, border: colorBorde !== 'transparent' ? `1px solid ${colorBorde}` : 'none', padding: colorFondo !== 'transparent' ? '6px 9px' : '6px 0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                              <span style={{ width: 16, flex: 'none', textAlign: 'center', fontSize: 13, fontWeight: 800, color: iconColor }}>
+                                {esRealizado ? '✓' : esNoRealizado ? '✗' : '○'}
+                              </span>
+                              <span style={{ flex: 'none', fontSize: 10.5, fontWeight: 700, color: 'var(--texto-tenue)', width: 44 }}>{r.hora}</span>
+                              <span style={{ flex: 1, minWidth: 0, fontSize: 11.5, fontWeight: 600, color: 'var(--texto-titulo)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                Tramo {r.tramo_n} · {tramo?.nombre ?? '—'}
+                              </span>
+                              <span style={{ flex: 'none', fontSize: 10, fontWeight: 700, color: colorEstado }}>{r.estado}</span>
+                            </div>
+                            {esNoRealizado && r.motivo && (
+                              <div style={{ marginTop: 5, marginLeft: 25, padding: '5px 9px', background: '#fff', borderRadius: 7, border: '1px solid #FED7D7', fontSize: 11, color: 'var(--texto-secundario)', fontStyle: 'italic' }}>
+                                Motivo: {r.motivo}
+                              </div>
+                            )}
+                            {esNoRealizado && !r.motivo && (
+                              <div style={{ marginTop: 5, marginLeft: 25, fontSize: 10.5, color: '#E53E3E', fontStyle: 'italic' }}>
+                                Sin motivo registrado
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
 
         <div className="card" style={{ padding: 16 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--texto-titulo)', marginBottom: 12 }}>Últimos vuelos</div>
-          {recentFlights.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--texto-tenue)', padding: '6px 0' }}>{esHoy ? 'Aún no hay vuelos registrados hoy.' : 'Sin vuelos registrados.'}</div>}
+          {day.flights.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--texto-tenue)', padding: '6px 0' }}>{esHoy ? 'Aún no hay vuelos registrados hoy.' : 'Sin vuelos registrados.'}</div>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {recentFlights.map((f) => {
               const tramo = tramosByN.get(f.tramo_n);
@@ -374,6 +388,14 @@ export default function PanelSupervision() {
               );
             })}
           </div>
+          {hayMasVuelos && (
+            <button
+              onClick={() => setVuelosOpen(!vuelosOpen)}
+              style={{ width: '100%', marginTop: 10, padding: '8px 0', border: '1px solid var(--borde-2)', borderRadius: 9, background: '#F7F9FC', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: 'var(--azul)' }}
+            >
+              {vuelosOpen ? 'Ver menos' : `Ver todos (${day.flights.length})`}
+            </button>
+          )}
           {recentFlights.some((f) => (f.latitud == null || f.longitud == null) && tramosByN.get(f.tramo_n)) && (
             <div style={{ fontSize: 10, color: 'var(--texto-tenue)', marginTop: 9 }}>
               * Ubicación aproximada del tramo (el vuelo no registró GPS propio).

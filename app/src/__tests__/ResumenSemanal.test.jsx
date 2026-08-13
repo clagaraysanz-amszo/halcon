@@ -55,31 +55,22 @@ function renderPage() {
   );
 }
 
-describe('ResumenSemanal — BUG: tocar un funcionario devolvía al panel de supervisor', () => {
-  it('el mini gráfico colapsado no contiene botones (no debe navegar por un toque cerca del encabezado)', () => {
+describe('ResumenSemanal — vista lista compacta y detalle por funcionario', () => {
+  it('muestra la lista de operadores con stats resumidas', () => {
     renderPage();
-    const miniChart = screen.getByTestId('mini-chart-1');
-    expect(miniChart.querySelectorAll('button')).toHaveLength(0);
+    expect(screen.getByTestId('toggle-1')).toBeInTheDocument();
+    expect(screen.getByText(/5 vuelos/)).toBeInTheDocument();
   });
 
-  it('tocar el encabezado del funcionario solo expande su detalle, no navega al panel', () => {
+  it('tocar un funcionario muestra su vista de detalle con chart y días', () => {
     renderPage();
     fireEvent.click(screen.getByTestId('toggle-1'));
-    expect(screen.queryByTestId('supervisor-home')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mini-chart-1')).toBeInTheDocument();
     expect(screen.getByTestId('dia-1-2026-08-11')).toBeInTheDocument();
-  });
-
-  it('clicks repetidos sobre el funcionario (abrir/cerrar) nunca navegan fuera de la página', () => {
-    renderPage();
-    const toggle = screen.getByTestId('toggle-1');
-    fireEvent.click(toggle);
-    fireEvent.click(toggle);
-    fireEvent.click(toggle);
     expect(screen.queryByTestId('supervisor-home')).not.toBeInTheDocument();
-    expect(screen.getByTestId('toggle-1')).toBeInTheDocument();
   });
 
-  it('tocar un día del detalle expandido SÍ navega al panel de supervisor con esa fecha', () => {
+  it('tocar un día en el detalle navega al panel de supervisor con esa fecha', () => {
     renderPage();
     fireEvent.click(screen.getByTestId('toggle-1'));
     fireEvent.click(screen.getByTestId('dia-1-2026-08-11'));
@@ -93,5 +84,12 @@ describe('ResumenSemanal — BUG: tocar un funcionario devolvía al panel de sup
     expect(diaVacio).toBeDisabled();
     fireEvent.click(diaVacio);
     expect(screen.queryByTestId('supervisor-home')).not.toBeInTheDocument();
+  });
+
+  it('el mini gráfico del detalle no contiene botones interactivos', () => {
+    renderPage();
+    fireEvent.click(screen.getByTestId('toggle-1'));
+    const miniChart = screen.getByTestId('mini-chart-1');
+    expect(miniChart.querySelectorAll('button')).toHaveLength(0);
   });
 });
