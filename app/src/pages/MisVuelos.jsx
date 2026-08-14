@@ -96,7 +96,7 @@ export default function MisVuelos() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {row.tramo_n ? `Tramo ${row.tramo_n} · ${tramo?.nombre ?? '—'}` : 'Vigilancia general'}
+                    {row.tramo_n ? `Tramo ${row.tramo_n} · ${tramo?.nombre ?? '—'}` : (row.descripcion || 'Vigilancia general')}
                   </div>
                   <div style={{ fontSize: 11.5, color: 'var(--texto-secundario)', marginTop: 2 }}>
                     {row.tramo_n ? `${tramo?.sector} · Cuad. ${tramo?.cuadrante}` : 'Zona sin sector asignado'}

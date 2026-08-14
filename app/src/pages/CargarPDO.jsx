@@ -188,10 +188,16 @@ function extraeDronesSinSector(workbook, operadores) {
       if (cargoIdx === -1) break; // otra fila (no es operador de dron) -> fin de sección
 
       let nombre = '';
+      let nombreIdx = -1;
       for (let j = cargoIdx + 1; j < row.length; j++) {
-        if (String(row[j]).trim()) { nombre = String(row[j]).trim(); break; }
+        if (String(row[j]).trim()) { nombre = String(row[j]).trim(); nombreIdx = j; break; }
       }
       if (!nombre) continue;
+
+      let descripcion = '';
+      for (let j = nombreIdx + 1; j < row.length; j++) {
+        if (String(row[j]).trim()) { descripcion = String(row[j]).trim(); break; }
+      }
 
       const toks = tokensDe(nombre);
       let best = null;
@@ -204,7 +210,7 @@ function extraeDronesSinSector(workbook, operadores) {
         noReconocidos.push(nombre);
         continue;
       }
-      asignaciones.push({ halcon_n: best.halcon_n, nombre: best.nombre, turno });
+      asignaciones.push({ halcon_n: best.halcon_n, nombre: best.nombre, turno, descripcion });
     }
   }
 
@@ -308,8 +314,8 @@ export default function CargarPDO() {
       detalle.push({ halcon_n: a.halcon_n, nombre: a.nombre, turno: turnos, count: n });
     }
     for (const a of dronesSinSector) {
-      nuevas.push({ fecha: f, turno: a.turno, halcon_n: a.halcon_n, tramo_n: null, hora: TURNO_HORA_DEFAULT[a.turno] });
-      detalle.push({ halcon_n: a.halcon_n, nombre: a.nombre, turno: a.turno, count: 0, general: true });
+      nuevas.push({ fecha: f, turno: a.turno, halcon_n: a.halcon_n, tramo_n: null, hora: TURNO_HORA_DEFAULT[a.turno], descripcion: a.descripcion || null });
+      detalle.push({ halcon_n: a.halcon_n, nombre: a.nombre, turno: a.turno, count: 0, general: true, descripcion: a.descripcion });
     }
     setPending((p) => [...p, ...nuevas]);
     setResumen({
@@ -597,12 +603,19 @@ export default function CargarPDO() {
               </div>
               <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--texto-titulo)', marginBottom: 7 }}>Operadores detectados</div>
               {resumen.detalle.map((d) => (
-                <div key={d.halcon_n} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--texto-titulo)', padding: '3px 0' }}>
-                  <span style={{ width: 24, height: 24, flex: 'none', borderRadius: 7, background: 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>{d.halcon_n}</span>
-                  <span style={{ flex: 1, minWidth: 0 }}>Halcón {d.halcon_n} · {d.nombre}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--texto-secundario)', flex: 'none' }}>
-                    Turno {d.turno} · {d.general ? 'Vigilancia general' : `${d.count} vuelos`}
-                  </span>
+                <div key={d.halcon_n} style={{ padding: '3px 0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--texto-titulo)' }}>
+                    <span style={{ width: 24, height: 24, flex: 'none', borderRadius: 7, background: 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>{d.halcon_n}</span>
+                    <span style={{ flex: 1, minWidth: 0 }}>Halcón {d.halcon_n} · {d.nombre}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--texto-secundario)', flex: 'none' }}>
+                      Turno {d.turno} · {d.general ? 'Sin sector' : `${d.count} vuelos`}
+                    </span>
+                  </div>
+                  {d.general && d.descripcion && (
+                    <div style={{ fontSize: 11, color: 'var(--texto-secundario)', marginLeft: 32, marginTop: 2, lineHeight: 1.4 }}>
+                      {d.descripcion}
+                    </div>
+                  )}
                 </div>
               ))}
               {resumen.inexistentes.length > 0 && (
@@ -629,8 +642,10 @@ export default function CargarPDO() {
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--texto-titulo)' }}>
                   <span style={{ fontWeight: 700 }}>{r.turno}</span>
                   <span>Halcón {r.halcon_n}</span>
-                  <span style={{ flex: 1 }}>
-                    {r.tramo_n ? `Tramo ${r.tramo_n} · ${tramosByN.get(r.tramo_n)?.nombre ?? '—'}` : 'Vigilancia general (sin sector)'}
+                  <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={r.tramo_n ? undefined : r.descripcion || ''}>
+                    {r.tramo_n
+                      ? `Tramo ${r.tramo_n} · ${tramosByN.get(r.tramo_n)?.nombre ?? '—'}`
+                      : r.descripcion || 'Vigilancia general (sin sector)'}
                   </span>
                   <span style={{ color: 'var(--texto-secundario)' }}>{r.hora}</span>
                   <button onClick={() => removePending(i)} style={{ border: 'none', background: 'transparent', color: 'var(--rojo)', cursor: 'pointer', fontSize: 16 }}>

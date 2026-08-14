@@ -46,7 +46,13 @@ export function RegistroProvider({ children, initialLastFlight = null }) {
     setSelectedTramo(null);
     setSelectedPdo(pdoRow);
     setSelectedTipoVuelo('Vigilancia General (Dron)');
-    setForm({ ...blankForm(), horaInicio: nowHHMM(), tipificacion: 'Vigilancia General (Dron)', turno: pdoRow?.turno || '' });
+    setForm({
+      ...blankForm(),
+      horaInicio: nowHHMM(),
+      tipificacion: 'Vigilancia General (Dron)',
+      turno: pdoRow?.turno || '',
+      ubicacionManual: pdoRow?.descripcion || '',
+    });
   }
 
   function setField(key, value) {
