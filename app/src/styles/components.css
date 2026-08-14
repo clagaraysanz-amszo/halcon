@@ -366,3 +366,59 @@
   align-items: center;
   justify-content: center;
 }
+
+/* ============ Layout ancho: tablet horizontal / desktop (≥720px) ============ */
+
+/* Dashboards con secciones independientes lado a lado (PanelSupervision, Home). */
+.content-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+@media (min-width: 720px) {
+  .content--split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+}
+
+/* Listas de tarjetas (MisVuelos, SeleccionTramo, HistorialDia, OtrosVuelos, etc.).
+   display:contents en mobile saca el wrapper del árbol de cajas para heredar
+   el gap exacto del padre (.content o .content--tight) sin duplicarlo. */
+.list-grid {
+  display: contents;
+}
+@media (min-width: 720px) {
+  .list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 12px;
+    align-items: start;
+  }
+}
+
+/* Pantallas de formulario/revisión secuencial (RegistroVuelo, Confirmacion,
+   detalle de ResumenSemanal): se ven peor estiradas, se mantienen angostas
+   y centradas dentro del shell ancho.
+   No combinar con .list-grid en la misma pantalla: 640px de content menos
+   padding deja ~576px, y minmax(320px,1fr) colapsaría a una sola columna. */
+@media (min-width: 720px) {
+  .screen--narrow .header,
+  .screen--narrow .content {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+}
+
+/* Evita que los mini-stats del header y las filas de navegación de fecha
+   se estiren a todo el ancho del shell, separando flechas del texto. */
+@media (min-width: 720px) {
+  .header-stats,
+  .datenav-row {
+    max-width: 460px;
+  }
+}

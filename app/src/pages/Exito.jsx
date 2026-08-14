@@ -63,7 +63,7 @@ export default function Exito() {
         <br />
         registrado en la bitácora del día
       </div>
-      <button data-testid="exito-volver" onClick={volverInicio} className="btn btn-primary" style={{ marginTop: 40, width: '100%' }}>
+      <button data-testid="exito-volver" onClick={volverInicio} className="btn btn-primary" style={{ marginTop: 40, width: '100%', maxWidth: 420 }}>
         Volver al inicio
       </button>
       <button data-testid="exito-registrar-otro" onClick={registrarOtro} className="btn-ghost btn" style={{ marginTop: 12, color: 'rgba(255,255,255,.75)', background: 'transparent' }}>

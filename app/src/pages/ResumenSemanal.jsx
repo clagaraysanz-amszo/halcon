@@ -142,7 +142,7 @@ export default function ResumenSemanal() {
   const opSeleccionado = selectedOp && weekly ? weekly.porOperador.find((o) => o.halconN === selectedOp) : null;
 
   return (
-    <div className="screen">
+    <div className={selectedOp ? 'screen screen--narrow' : 'screen'}>
       <div className="header header--supervisor" style={{ padding: '10px 16px 10px' }}>
         <div className="header-row">
           <button
@@ -166,7 +166,7 @@ export default function ResumenSemanal() {
         </div>
 
         {!selectedOp && (
-          <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
+          <div className="datenav-row" style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
             <button
               onClick={() => setFecha(addDaysStr(fecha, -7))}
               style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -209,36 +209,38 @@ export default function ResumenSemanal() {
           </div>
         )}
 
-        {!loading && weekly && !selectedOp && weekly.porOperador.map((op) => {
-          const nombre = operadoresByHalcon.get(op.halconN)?.nombre ?? op.halconN;
-          return (
-            <button
-              key={op.halconN}
-              onClick={() => setSelectedOp(op.halconN)}
-              data-testid={`toggle-${op.halconN}`}
-              className="card"
-              style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textAlign: 'left', border: '1px solid var(--borde-1)' }}
-            >
-              <div style={{ width: 34, height: 34, flex: 'none', borderRadius: 9, background: 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>
-                {op.halconN}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--texto-titulo)' }}>Halcón {op.halconN} · {nombre}</div>
-                <div style={{ fontSize: 11, color: 'var(--texto-tenue)', fontWeight: 600, marginTop: 1 }}>
-                  {op.totalVuelos} vuelos · {(op.totalMinutos / 60).toFixed(1)}h · {op.totalRealizados}/{op.totalAsignados} tramos
+        <div className="list-grid">
+          {!loading && weekly && !selectedOp && weekly.porOperador.map((op) => {
+            const nombre = operadoresByHalcon.get(op.halconN)?.nombre ?? op.halconN;
+            return (
+              <button
+                key={op.halconN}
+                onClick={() => setSelectedOp(op.halconN)}
+                data-testid={`toggle-${op.halconN}`}
+                className="card"
+                style={{ width: '100%', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textAlign: 'left', border: '1px solid var(--borde-1)' }}
+              >
+                <div style={{ width: 34, height: 34, flex: 'none', borderRadius: 9, background: 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>
+                  {op.halconN}
                 </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 'none' }}>
-                {op.tasa !== null && (
-                  <span style={{ fontSize: 11, fontWeight: 800, color: op.tasa >= 80 ? 'var(--verde-ok)' : op.tasa >= 50 ? 'var(--ambar-texto)' : '#E53E3E', background: op.tasa >= 80 ? '#F0FFF4' : op.tasa >= 50 ? '#FFFBEB' : '#FFF5F5', padding: '3px 8px', borderRadius: 10 }}>
-                    {op.tasa}%
-                  </span>
-                )}
-                <span style={{ fontSize: 14, color: 'var(--texto-tenue)' }}>›</span>
-              </div>
-            </button>
-          );
-        })}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--texto-titulo)' }}>Halcón {op.halconN} · {nombre}</div>
+                  <div style={{ fontSize: 11, color: 'var(--texto-tenue)', fontWeight: 600, marginTop: 1 }}>
+                    {op.totalVuelos} vuelos · {(op.totalMinutos / 60).toFixed(1)}h · {op.totalRealizados}/{op.totalAsignados} tramos
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 'none' }}>
+                  {op.tasa !== null && (
+                    <span style={{ fontSize: 11, fontWeight: 800, color: op.tasa >= 80 ? 'var(--verde-ok)' : op.tasa >= 50 ? 'var(--ambar-texto)' : '#E53E3E', background: op.tasa >= 80 ? '#F0FFF4' : op.tasa >= 50 ? '#FFFBEB' : '#FFF5F5', padding: '3px 8px', borderRadius: 10 }}>
+                      {op.tasa}%
+                    </span>
+                  )}
+                  <span style={{ fontSize: 14, color: 'var(--texto-tenue)' }}>›</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
         {!loading && weekly && selectedOp && opSeleccionado && (
           <div className="card" style={{ padding: 16 }}>

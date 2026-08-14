@@ -56,7 +56,7 @@ export default function Confirmacion() {
     : 'linear-gradient(135deg,#4C1D95,#6D28D9)';
 
   return (
-    <div className="screen">
+    <div className="screen screen--narrow">
       <ScreenHeader onBack={() => navigate('/registro')} title="Confirmación" subtitle="Revisa antes de guardar" />
 
       <div className="content">

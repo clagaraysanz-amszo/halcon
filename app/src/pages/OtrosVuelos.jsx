@@ -33,6 +33,7 @@ export default function OtrosVuelos() {
           TIPOS DE VUELO
         </div>
 
+        <div className="list-grid">
         {OTROS_TIPOS.map(({ tipo, icono }) => (
           <button
             key={tipo}
@@ -63,6 +64,7 @@ export default function OtrosVuelos() {
             <span style={{ color: 'var(--texto-placeholder)', fontSize: 16 }}>›</span>
           </button>
         ))}
+        </div>
       </div>
     </div>
   );

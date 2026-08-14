@@ -397,7 +397,7 @@ export default function CargarPDO() {
 
         <div>
           <label className="field-label">Fecha operativa del PDO</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="datenav-row" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
               type="button"
               onClick={() => setFecha(addDaysISO(fecha, -1))}
@@ -592,6 +592,7 @@ export default function CargarPDO() {
             </button>
           )}
         </div>
+        <div className="list-grid">
         {!loadingExisting &&
           distribucion.map((p) => (
             <div key={p.turno} className="card" style={{ padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -611,6 +612,7 @@ export default function CargarPDO() {
               <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--naranjo)' }}>{p.count} vuelos</span>
             </div>
           ))}
+        </div>
 
         <div className="spacer" />
         <button onClick={confirmarYDistribuir} disabled={saving} className="btn btn-primary" style={{ width: '100%' }}>

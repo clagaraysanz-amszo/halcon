@@ -127,7 +127,7 @@ export default function PanelSupervision() {
           </div>
         </div>
 
-        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
+        <div className="datenav-row" style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
           <button
             onClick={() => setFecha(addDaysStr(fecha, -1))}
             style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid rgba(255,255,255,.2)', background: 'rgba(255,255,255,.08)', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -154,7 +154,8 @@ export default function PanelSupervision() {
         </div>
       </div>
 
-      <div className="content">
+      <div className="content content--split">
+      <div className="content-col">
         {esHoy && (
           <button
             onClick={() => navigate('/supervisor/pdo')}
@@ -272,7 +273,9 @@ export default function PanelSupervision() {
             </div>
           </div>
         </div>
+      </div>
 
+      <div className="content-col">
         <div className="card" style={{ padding: 16 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--texto-titulo)', marginBottom: 3 }}>Vuelos por operador</div>
           <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', fontWeight: 600, marginBottom: 14 }}>Solo funcionarios en turno según PDO</div>
@@ -441,6 +444,7 @@ export default function PanelSupervision() {
             </div>
           )}
         </div>
+      </div>
 
       </div>
     </div>

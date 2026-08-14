@@ -63,6 +63,7 @@ export default function MisVuelos() {
           CRONOGRAMA DE SOBREVUELOS
         </div>
 
+        <div className="list-grid">
         {day.pdoRows.map((row) => {
           const tramo = tramosByN.get(row.tramo_n);
           const done = row.estado === 'Realizado';
@@ -202,6 +203,7 @@ export default function MisVuelos() {
             </div>
           );
         })}
+        </div>
 
         {!day.loading && day.pdoRows.length > 0 && day.pdoPend === 0 && (
           <div

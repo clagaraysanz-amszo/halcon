@@ -136,3 +136,10 @@ textarea {
     box-shadow: 0 0 40px rgba(22, 35, 63, 0.08);
   }
 }
+
+/* Tablet horizontal / desktop: la app deja de ser una columna angosta. */
+@media (min-width: 720px) {
+  .app-shell {
+    max-width: 1120px;
+  }
+}

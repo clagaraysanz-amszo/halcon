@@ -21,6 +21,7 @@ export default function HistorialDia() {
         {!day.loading && day.flights.length === 0 && (
           <div className="empty-state">Aún no has registrado vuelos hoy.</div>
         )}
+        <div className="list-grid">
         {day.flights.map((f) => {
           const tramo = tramosByN.get(f.tramo_n);
           const esOtroVuelo = !f.tramo_n;
@@ -79,6 +80,7 @@ export default function HistorialDia() {
             </div>
           );
         })}
+        </div>
       </div>
     </div>
   );

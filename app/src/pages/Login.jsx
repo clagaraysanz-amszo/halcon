@@ -111,7 +111,7 @@ export default function Login() {
         </div>
       </div>
 
-      <div style={{ background: '#fff', borderRadius: 22, padding: '20px 18px 22px', boxShadow: '0 20px 50px rgba(0,0,0,.3)', animation: 'hkpop .6s ease both' }}>
+      <div style={{ background: '#fff', borderRadius: 22, padding: '20px 18px 22px', boxShadow: '0 20px 50px rgba(0,0,0,.3)', animation: 'hkpop .6s ease both', maxWidth: 460, margin: '0 auto', width: '100%' }}>
         {mode === 'operador' && !selected && (
           <>
             <div style={{ fontSize: 15, fontWeight: 700, color: '#16233F', marginBottom: 3, textAlign: 'center' }}>Selecciona tu Halcón</div>

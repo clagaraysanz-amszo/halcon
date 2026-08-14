@@ -72,7 +72,8 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="content">
+      <div className="content content--split">
+      <div className="content-col">
         <div className="kpi-row">
           <div className="kpi-card">
             <div className="kpi-value">{day.loading ? '—' : day.vuelosHoy}</div>
@@ -255,6 +256,9 @@ export default function Home() {
           <span style={{ fontSize: 22, color: '#7C3AED' }}>→</span>
         </button>
 
+      </div>
+
+      <div className="content-col">
         <button
           onClick={() => navigate('/historial')}
           className="btn-outline btn"
@@ -334,6 +338,8 @@ export default function Home() {
         <button onClick={signOut} className="btn-danger-ghost btn" style={{ marginTop: 4 }}>
           Cerrar Sesión
         </button>
+      </div>
+
       </div>
     </div>
   );

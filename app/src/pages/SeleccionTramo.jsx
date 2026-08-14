@@ -87,6 +87,7 @@ export default function SeleccionTramo() {
       )}
 
       <div className="content content--tight">
+        <div className="list-grid">
         {filtered.map((t) => {
           const done = doneTramoNs.has(t.tramo_n);
           const inPdo = pdoPendByTramoN.has(t.tramo_n);
@@ -137,6 +138,7 @@ export default function SeleccionTramo() {
             </button>
           );
         })}
+        </div>
         {filtered.length === 0 && <div className="empty-state">Sin resultados para “{query}”.</div>}
       </div>
     </div>

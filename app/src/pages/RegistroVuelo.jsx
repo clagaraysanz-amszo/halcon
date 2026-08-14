@@ -44,7 +44,7 @@ export default function RegistroVuelo() {
   const backPath = esTramo ? '/tramos' : '/otros-vuelos';
 
   return (
-    <div className="screen">
+    <div className="screen screen--narrow">
       <ScreenHeader onBack={() => navigate(backPath)} title={headerTitle} subtitle={headerSubtitle} />
 
       <div className="content">
