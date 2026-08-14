@@ -46,7 +46,7 @@ async function getAccessToken(supabase) {
         client_secret: clientSecret,
         refresh_token: rtRow.value,
         grant_type: 'refresh_token',
-        scope: 'offline_access Files.ReadWrite.All',
+        scope: 'offline_access Files.ReadWrite',
       }),
     }
   );
