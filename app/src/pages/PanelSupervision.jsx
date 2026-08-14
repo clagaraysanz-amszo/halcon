@@ -95,6 +95,7 @@ export default function PanelSupervision() {
 
   const [estadoOpen, setEstadoOpen] = useState(false);
   const [vuelosOpen, setVuelosOpen] = useState(false);
+  const [bitacoraStatus, setBitacoraStatus] = useState(null);
 
   const recentFlights = day.flights.slice(0, vuelosOpen ? undefined : MAX_VUELOS_INICIALES);
   const hayMasVuelos = day.flights.length > MAX_VUELOS_INICIALES;
@@ -186,6 +187,44 @@ export default function PanelSupervision() {
             <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', fontWeight: 600, marginTop: 1 }}>Historial por funcionario</div>
           </div>
           <span style={{ fontSize: 12, fontWeight: 700, color: '#2C6FB5' }}>Ver ›</span>
+        </button>
+
+        <button
+          onClick={async () => {
+            if (bitacoraStatus === 'loading') return;
+            setBitacoraStatus('loading');
+            try {
+              const res = await fetch(`/api/bitacora/nocturna?fecha=${fecha}`, { method: 'POST' });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error || 'Error al generar');
+              setBitacoraStatus(`ok:${data.vuelos}`);
+              setTimeout(() => setBitacoraStatus(null), 5000);
+            } catch (e) {
+              setBitacoraStatus('error:' + e.message);
+              setTimeout(() => setBitacoraStatus(null), 6000);
+            }
+          }}
+          className="card"
+          style={{ width: '100%', padding: '14px 15px', cursor: bitacoraStatus === 'loading' ? 'wait' : 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12, opacity: bitacoraStatus === 'loading' ? 0.7 : 1 }}
+        >
+          <div style={{ width: 44, height: 44, flex: 'none', borderRadius: 12, background: '#6B5FB0', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+            🌙
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--texto-titulo)' }}>Bitácora nocturna</div>
+            <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', fontWeight: 600, marginTop: 1 }}>
+              {bitacoraStatus === 'loading'
+                ? 'Generando documento...'
+                : bitacoraStatus?.startsWith('ok:')
+                  ? `✓ Generada con ${bitacoraStatus.split(':')[1]} vuelos`
+                  : bitacoraStatus?.startsWith('error:')
+                    ? `✗ ${bitacoraStatus.split(':').slice(1).join(':')}`
+                    : 'Generar Word DGAC y subir a SharePoint'}
+            </div>
+          </div>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#6B5FB0' }}>
+            {bitacoraStatus === 'loading' ? '...' : 'Generar ›'}
+          </span>
         </button>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
