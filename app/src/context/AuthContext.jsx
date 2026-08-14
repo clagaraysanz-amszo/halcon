@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
     supabase
       .from('operadores')
       .select('*')
-      .eq('email', session.user.email)
+      .ilike('email', session.user.email)
       .maybeSingle()
       .then(({ data, error }) => {
         if (cancelled) return;
