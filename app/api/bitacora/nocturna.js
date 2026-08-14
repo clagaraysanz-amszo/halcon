@@ -77,6 +77,37 @@ function formatFechaDDMMYYYY(fechaStr) {
   return `${d}/${m}/${y}`;
 }
 
+/** Minutos desde las 00:00, tratando 00:00–06:59 como "después de
+ *  medianoche" (+24h) para que la noche ordene 19:00…23:59, 00:00…06:59
+ *  en vez de alfabéticamente (que pondría 00:36 antes que 19:21). */
+function minutosNoche(hora) {
+  const [hh, mm] = hora.split(':').map(Number);
+  const h = hh < 7 ? hh + 24 : hh;
+  return h * 60 + mm;
+}
+
+/** Fecha calendario real del vuelo: si es antes de las 07:00, es el día
+ *  siguiente a la fecha operativa (la noche cruzó la medianoche). */
+function fechaDelVuelo(fechaOperativa, horaInicio) {
+  const [hh] = horaInicio.split(':').map(Number);
+  if (hh >= 7) return fechaOperativa;
+  const [y, m, d] = fechaOperativa.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() + 1);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
+
+/** "22:15–22:45" para vuelos de la fecha operativa; "15/08 00:10–00:40"
+ *  para vuelos después de medianoche, dejando explícito que es otro día. */
+function horaCelda(fechaOperativa, horaInicio, minutos) {
+  const hFin = horaFin(horaInicio, minutos || 0);
+  const [hh] = horaInicio.split(':').map(Number);
+  if (hh >= 7) return `${horaInicio}–${hFin}`;
+  const fVuelo = fechaDelVuelo(fechaOperativa, horaInicio);
+  const [, m, d] = fVuelo.split('-');
+  return `${d}/${m} ${horaInicio}–${hFin}`;
+}
+
 function thinBorders() {
   const side = { style: BorderStyle.SINGLE, size: 1, color: '999999' };
   return { top: side, bottom: side, left: side, right: side };
@@ -118,7 +149,10 @@ function dataCell(text, width, opts = {}) {
   });
 }
 
-function buildDocx(fecha, flights, drones, operadores, tramos) {
+function buildDocx(fecha, flightsSinOrdenar, drones, operadores, tramos) {
+  const flights = [...flightsSinOrdenar].sort(
+    (a, b) => minutosNoche(a.hora_inicio || '00:00') - minutosNoche(b.hora_inicio || '00:00')
+  );
   const fechaFmt = formatFechaDDMMYYYY(fecha);
   const totalMin = flights.reduce((s, f) => s + (f.minutos || 0), 0);
   const horas = Math.floor(totalMin / 60);
@@ -234,9 +268,9 @@ function buildDocx(fecha, flights, drones, operadores, tramos) {
     const vueloHeaderRow = new TableRow({
       children: [
         headerCell('N°', 5),
-        headerCell('Hora', 10),
+        headerCell('Horario', 11),
         headerCell('Operador', 12),
-        headerCell('RPA', 18),
+        headerCell('RPA', 17),
         headerCell('Matrícula', 9),
         headerCell('Ubicación', 16),
         headerCell('Altura', 8),
@@ -251,8 +285,7 @@ function buildDocx(fecha, flights, drones, operadores, tramos) {
       const op = opMap.get(f.halcon_n);
       const tramo = f.tramo_n ? tramoMap.get(f.tramo_n) : null;
       const ubicacion = f.ubicacion_manual || tramo?.nombre || '—';
-      const hFin = f.hora_inicio ? horaFin(f.hora_inicio, f.minutos || 0) : '—';
-      const horaRango = f.hora_inicio ? `${f.hora_inicio}–${hFin}` : '—';
+      const horaRango = f.hora_inicio ? horaCelda(fecha, f.hora_inicio, f.minutos) : '—';
 
       return new TableRow({
         children: [
@@ -329,6 +362,59 @@ function buildDocx(fecha, flights, drones, operadores, tramos) {
           width: { size: 100, type: WidthType.PERCENTAGE },
           layout: TableLayoutType.FIXED,
           rows: [eqHeaderRow, ...eqRows],
+        })
+      );
+    }
+
+    const halconesUsados = [...new Set(flights.map((f) => f.halcon_n))];
+    const pilotos = halconesUsados
+      .map((hn) => opMap.get(hn))
+      .filter(Boolean)
+      .sort((a, b) => a.halcon_n.localeCompare(b.halcon_n, undefined, { numeric: true }));
+
+    if (pilotos.length > 0) {
+      children.push(
+        new Paragraph({
+          spacing: { before: 300, after: 100 },
+          children: [
+            new TextRun({
+              text: 'PILOTOS A CARGO',
+              bold: true, size: 22, font: 'Calibri', color: '16233F',
+            }),
+          ],
+        })
+      );
+
+      const pilotoHeaderRow = new TableRow({
+        children: [
+          headerCell('Halcón', 8),
+          headerCell('Nombre', 24),
+          headerCell('RUT', 12),
+          headerCell('N° Credencial RPA', 14),
+          headerCell('Validez certificado', 14),
+          headerCell('Habilitaciones', 28),
+        ],
+      });
+
+      const pilotoRows = pilotos.map(
+        (p) =>
+          new TableRow({
+            children: [
+              dataCell(p.halcon_n, 8, { center: true, bold: true }),
+              dataCell(p.nombre, 24),
+              dataCell(p.rut || 'Pendiente', 12, { center: true }),
+              dataCell(p.credencial_rpa_n || 'Pendiente', 14, { center: true }),
+              dataCell(p.credencial_validez ? formatFechaDDMMYYYY(p.credencial_validez) : 'Pendiente', 14, { center: true }),
+              dataCell(p.habilitaciones || '—', 28, { size: 14 }),
+            ],
+          })
+      );
+
+      children.push(
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          layout: TableLayoutType.FIXED,
+          rows: [pilotoHeaderRow, ...pilotoRows],
         })
       );
     }
