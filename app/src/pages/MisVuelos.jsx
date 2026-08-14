@@ -10,7 +10,7 @@ import ScreenHeader from '../components/ScreenHeader';
 export default function MisVuelos() {
   const { operador } = useAuth();
   const { tramosByN } = useCatalog();
-  const { startRegistro } = useRegistro();
+  const { startRegistro, startVigilanciaGeneral } = useRegistro();
   const day = useOperatorDay(operador.halcon_n);
   const navigate = useNavigate();
   const turnoInfo = day.turno ? TURNOS[day.turno] : null;
@@ -19,6 +19,11 @@ export default function MisVuelos() {
   const [saving, setSaving] = useState(false);
 
   function realizarVuelo(pdoRow) {
+    if (!pdoRow.tramo_n) {
+      startVigilanciaGeneral(pdoRow);
+      navigate('/registro');
+      return;
+    }
     const tramo = tramosByN.get(pdoRow.tramo_n);
     startRegistro(tramo, pdoRow);
     navigate('/registro');
@@ -91,10 +96,10 @@ export default function MisVuelos() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    Tramo {row.tramo_n} · {tramo?.nombre ?? '—'}
+                    {row.tramo_n ? `Tramo ${row.tramo_n} · ${tramo?.nombre ?? '—'}` : 'Vigilancia general'}
                   </div>
                   <div style={{ fontSize: 11.5, color: 'var(--texto-secundario)', marginTop: 2 }}>
-                    {tramo?.sector} · Cuad. {tramo?.cuadrante}
+                    {row.tramo_n ? `${tramo?.sector} · Cuad. ${tramo?.cuadrante}` : 'Zona sin sector asignado'}
                   </div>
                 </div>
                 <span className={`badge ${done ? 'badge--done' : noRealizado ? 'badge--noreal' : 'badge--pend'}`}>

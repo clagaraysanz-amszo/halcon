@@ -22,10 +22,10 @@ function addDaysISO(iso, days) {
   return toISODate(d);
 }
 
-/** Extrae todo el texto de un Excel (todas las hojas, fila por fila) para que
- *  interpretarPDO pueda buscar los operadores de dron y sus sobrevuelos. */
-function excelATexto(arrayBuffer) {
-  const wb = XLSX.read(arrayBuffer, { type: 'array' });
+/** Extrae todo el texto de un workbook ya parseado (todas las hojas, fila por
+ *  fila) para que interpretarPDO pueda buscar los operadores de dron y sus
+ *  sobrevuelos. */
+function workbookATexto(wb) {
   const lineas = [];
   for (const nombre of wb.SheetNames) {
     const rows = XLSX.utils.sheet_to_json(wb.Sheets[nombre], { header: 1, raw: false, defval: '' });
@@ -153,6 +153,64 @@ function interpretarPDO(text, operadores) {
   return { asignaciones, noReconocidos };
 }
 
+const SHEET_TURNO = { 'TURNO A-SE': 'A', 'TURNO B-C': 'B', 'TURNO N': 'N' };
+const TURNO_HORA_DEFAULT = { A: '07:00', B: '14:00', N: '22:00' };
+
+/**
+ * Detecta operadores de dron listados en la sección "PERSONAL DRON" de cada
+ * hoja de turno cuando el PDO NO trae sobrevuelos de sector puntuales (solo
+ * pasa por restricciones de lluvia: se les asigna "vigilancia general" de
+ * zona en vez de "SOBREVUELOS: ... SECTOR N"). A diferencia de
+ * interpretarPDO(), trabaja directo sobre las filas del Excel (no sobre el
+ * texto aplanado) para ubicar la sección con precisión.
+ */
+function extraeDronesSinSector(workbook, operadores) {
+  const ops = operadores
+    .filter((o) => o.rol === 'Operador')
+    .map((o) => ({ ...o, toks: tokensDe(o.nombre) }));
+
+  const asignaciones = [];
+  const noReconocidos = [];
+
+  for (const sheetName of workbook.SheetNames) {
+    const turno = SHEET_TURNO[sheetName];
+    if (!turno) continue;
+    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, raw: false, defval: '' });
+
+    const inicio = rows.findIndex((r) => r.some((c) => normaliza(String(c)).includes('personal dron')));
+    if (inicio === -1) continue;
+
+    for (let i = inicio + 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (row.every((c) => !String(c).trim())) break; // fin de la sección PERSONAL DRON
+
+      const cargoIdx = row.findIndex((c) => /operador\s*dron/i.test(normaliza(String(c))));
+      if (cargoIdx === -1) break; // otra fila (no es operador de dron) -> fin de sección
+
+      let nombre = '';
+      for (let j = cargoIdx + 1; j < row.length; j++) {
+        if (String(row[j]).trim()) { nombre = String(row[j]).trim(); break; }
+      }
+      if (!nombre) continue;
+
+      const toks = tokensDe(nombre);
+      let best = null;
+      let bestScore = 0;
+      for (const o of ops) {
+        const score = o.toks.filter((t) => toks.includes(t)).length;
+        if (score > bestScore) { bestScore = score; best = o; }
+      }
+      if (!best || bestScore < 2) {
+        noReconocidos.push(nombre);
+        continue;
+      }
+      asignaciones.push({ halcon_n: best.halcon_n, nombre: best.nombre, turno });
+    }
+  }
+
+  return { asignaciones, noReconocidos };
+}
+
 export default function CargarPDO() {
   const navigate = useNavigate();
   const { operadores, tramosByN, operadoresByHalcon } = useCatalog();
@@ -218,12 +276,19 @@ export default function CargarPDO() {
     setPending((p) => p.filter((_, i) => i !== idx));
   }
 
-  function procesarTextoPdo(text, fechaUsar) {
+  function procesarTextoPdo(text, fechaUsar, workbook) {
     const f = fechaUsar || fecha;
     const { asignaciones, noReconocidos } = interpretarPDO(text, operadores);
-    if (asignaciones.length === 0) {
+    // Solo se calcula sobre el Excel subido (no disponible al pegar texto).
+    // Si el operador YA tiene sobrevuelos de sector (formato anterior), esa
+    // asignación detallada tiene prioridad y se ignora la genérica.
+    const dronesGenerales = workbook ? extraeDronesSinSector(workbook, operadores) : { asignaciones: [], noReconocidos: [] };
+    const yaAsignados = new Set(asignaciones.map((a) => a.halcon_n));
+    const dronesSinSector = dronesGenerales.asignaciones.filter((a) => !yaAsignados.has(a.halcon_n));
+
+    if (asignaciones.length === 0 && dronesSinSector.length === 0) {
       setResumen(null);
-      setError('No se detectó ningún operador de dron con sobrevuelos en el archivo. Revisa que el PDO incluya las líneas "SOBREVUELOS: … SECTOR N".');
+      setError('No se detectó ningún operador de dron con sobrevuelos en el archivo. Revisa que el PDO incluya las líneas "SOBREVUELOS: … SECTOR N" o la sección "PERSONAL DRON".');
       return;
     }
     const nuevas = [];
@@ -242,8 +307,17 @@ export default function CargarPDO() {
       const turnos = [...new Set(a.rows.map((r) => r.turno))].join('/');
       detalle.push({ halcon_n: a.halcon_n, nombre: a.nombre, turno: turnos, count: n });
     }
+    for (const a of dronesSinSector) {
+      nuevas.push({ fecha: f, turno: a.turno, halcon_n: a.halcon_n, tramo_n: null, hora: TURNO_HORA_DEFAULT[a.turno] });
+      detalle.push({ halcon_n: a.halcon_n, nombre: a.nombre, turno: a.turno, count: 0, general: true });
+    }
     setPending((p) => [...p, ...nuevas]);
-    setResumen({ fecha: f, detalle, noReconocidos, inexistentes: [...sectoresInexistentes] });
+    setResumen({
+      fecha: f,
+      detalle,
+      noReconocidos: [...noReconocidos, ...dronesGenerales.noReconocidos],
+      inexistentes: [...sectoresInexistentes],
+    });
     setError('');
   }
 
@@ -259,12 +333,13 @@ export default function CargarPDO() {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const texto = excelATexto(reader.result);
+        const wb = XLSX.read(reader.result, { type: 'array' });
+        const texto = workbookATexto(wb);
         // La fecha SIEMPRE es la seleccionada manualmente por el supervisor.
         // No auto-detectamos del Excel/nombre para evitar sobreescribir la
         // selección (causaba confusión en móvil: el usuario elegía 12/08 pero
         // el Excel tenía otra fecha y se guardaba en la fecha incorrecta).
-        procesarTextoPdo(texto, fecha);
+        procesarTextoPdo(texto, fecha, wb);
       } catch {
         setError('No se pudo leer el archivo. Sube el PDO en formato Excel (.xlsx o .xls).');
       } finally {
@@ -525,7 +600,9 @@ export default function CargarPDO() {
                 <div key={d.halcon_n} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--texto-titulo)', padding: '3px 0' }}>
                   <span style={{ width: 24, height: 24, flex: 'none', borderRadius: 7, background: 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>{d.halcon_n}</span>
                   <span style={{ flex: 1, minWidth: 0 }}>Halcón {d.halcon_n} · {d.nombre}</span>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--texto-secundario)', flex: 'none' }}>Turno {d.turno} · {d.count} vuelos</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--texto-secundario)', flex: 'none' }}>
+                    Turno {d.turno} · {d.general ? 'Vigilancia general' : `${d.count} vuelos`}
+                  </span>
                 </div>
               ))}
               {resumen.inexistentes.length > 0 && (
@@ -552,7 +629,9 @@ export default function CargarPDO() {
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--texto-titulo)' }}>
                   <span style={{ fontWeight: 700 }}>{r.turno}</span>
                   <span>Halcón {r.halcon_n}</span>
-                  <span style={{ flex: 1 }}>Tramo {r.tramo_n} · {tramosByN.get(r.tramo_n)?.nombre ?? '—'}</span>
+                  <span style={{ flex: 1 }}>
+                    {r.tramo_n ? `Tramo ${r.tramo_n} · ${tramosByN.get(r.tramo_n)?.nombre ?? '—'}` : 'Vigilancia general (sin sector)'}
+                  </span>
                   <span style={{ color: 'var(--texto-secundario)' }}>{r.hora}</span>
                   <button onClick={() => removePending(i)} style={{ border: 'none', background: 'transparent', color: 'var(--rojo)', cursor: 'pointer', fontSize: 16 }}>
                     ×

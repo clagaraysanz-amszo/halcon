@@ -38,6 +38,17 @@ export function RegistroProvider({ children, initialLastFlight = null }) {
     setForm({ ...blankForm(), horaInicio: nowHHMM(), tipificacion: tipo });
   }
 
+  // Sobrevuelo asignado por el PDO pero sin tramo/sector puntual (p.ej. días
+  // de lluvia donde solo se asigna "vigilancia general" de zona). Reutiliza
+  // el flujo de "Otro Vuelo" pero conserva el link al pdoRow para que al
+  // confirmar se marque Realizado en pdo_dia igual que un tramo normal.
+  function startVigilanciaGeneral(pdoRow) {
+    setSelectedTramo(null);
+    setSelectedPdo(pdoRow);
+    setSelectedTipoVuelo('Vigilancia General (Dron)');
+    setForm({ ...blankForm(), horaInicio: nowHHMM(), tipificacion: 'Vigilancia General (Dron)', turno: pdoRow?.turno || '' });
+  }
+
   function setField(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
   }
@@ -57,6 +68,7 @@ export function RegistroProvider({ children, initialLastFlight = null }) {
     setField,
     startRegistro,
     startOtroVuelo,
+    startVigilanciaGeneral,
     lastFlight,
     setLastFlight,
     reset,

@@ -195,7 +195,11 @@ export default function Home() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {nextPend ? `Próximo: Tramo ${nextPend.tramo_n}` : 'Todos los sobrevuelos completados'}
+                {nextPend
+                  ? nextPend.tramo_n
+                    ? `Próximo: Tramo ${nextPend.tramo_n}`
+                    : 'Próximo: Vigilancia general'
+                  : 'Todos los sobrevuelos completados'}
               </span>
               <span style={{ color: '#2C6FB5', fontSize: 16 }}>›</span>
             </div>

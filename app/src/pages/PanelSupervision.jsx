@@ -355,7 +355,7 @@ export default function PanelSupervision() {
                               </span>
                               <span style={{ flex: 'none', fontSize: 10.5, fontWeight: 700, color: 'var(--texto-tenue)', width: 44 }}>{r.hora}</span>
                               <span style={{ flex: 1, minWidth: 0, fontSize: 11.5, fontWeight: 600, color: 'var(--texto-titulo)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                Tramo {r.tramo_n} · {tramo?.nombre ?? '—'}
+                                {r.tramo_n ? `Tramo ${r.tramo_n} · ${tramo?.nombre ?? '—'}` : 'Vigilancia general (sin sector)'}
                               </span>
                               <span style={{ flex: 'none', fontSize: 10, fontWeight: 700, color: colorEstado }}>{r.estado}</span>
                             </div>
