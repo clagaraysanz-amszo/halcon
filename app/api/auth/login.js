@@ -2,7 +2,7 @@ export default function handler(req, res) {
   const clientId = process.env.ONEDRIVE_CLIENT_ID;
   const tenantId = process.env.ONEDRIVE_TENANT_ID;
   const redirectUri = 'https://halcon-iota.vercel.app/api/auth/callback';
-  const scope = 'offline_access Files.ReadWrite';
+  const scope = 'offline_access Files.ReadWrite.All';
 
   const authUrl =
     `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize` +
