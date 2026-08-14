@@ -1,7 +1,9 @@
+import { useState, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useRegistro } from '../context/RegistroContext';
 import { formatFechaCorta } from '../lib/turnos';
+import { parseDjiLog } from '../lib/djiLog';
 import ScreenHeader from '../components/ScreenHeader';
 
 const ALTURAS = ['60 metros', '70 metros', '80 metros', '90 metros', '100 metros', '110 metros', '120 metros', '200 metros', '300 metros', '400 metros', '500 metros', '600 metros'];
@@ -20,12 +22,37 @@ export default function RegistroVuelo() {
   const { operador } = useAuth();
   const { selectedTramo, selectedTipoVuelo, form, setField } = useRegistro();
   const navigate = useNavigate();
+  const fileRef = useRef(null);
+  const [djiStatus, setDjiStatus] = useState('idle');
+  const [djiInfo, setDjiInfo] = useState(null);
+  const [djiError, setDjiError] = useState('');
 
   const esTramo = !!selectedTramo;
   const esOtroVuelo = !!selectedTipoVuelo;
   const esFarellones = selectedTipoVuelo === 'Servicio Farellones';
 
   if (!esTramo && !esOtroVuelo) return <Navigate to="/tramos" replace />;
+
+  async function handleDjiFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setDjiStatus('loading');
+    setDjiError('');
+    try {
+      const data = await parseDjiLog(file);
+      if (data.horaInicio) setField('horaInicio', data.horaInicio);
+      if (data.minutos) setField('minutos', data.minutos);
+      if (data.altura) setField('altura', data.altura);
+      if (data.distancia) setField('distancia', data.distancia);
+      if (data.aeronave) setField('aeronave', data.aeronave);
+      setDjiInfo(data);
+      setDjiStatus('done');
+    } catch (err) {
+      setDjiError(err.message);
+      setDjiStatus('error');
+    }
+    if (fileRef.current) fileRef.current.value = '';
+  }
 
   const puedeContinuar =
     form.altura &&
@@ -61,6 +88,58 @@ export default function RegistroVuelo() {
             <Campo label="Funcionario" valor={operador.nombre} />
             <Campo label="Operativo" valor={`Halcón ${operador.halcon_n}`} />
           </div>
+        </div>
+
+        <div style={{ background: djiStatus === 'done' ? 'var(--verde-fondo-2)' : '#F0F4FF', border: `1px solid ${djiStatus === 'done' ? 'var(--verde-borde)' : '#C7D2FE'}`, borderRadius: 14, padding: '12px 15px' }}>
+          <input ref={fileRef} type="file" accept=".txt,.TXT" onChange={handleDjiFile} style={{ display: 'none' }} />
+          {djiStatus === 'idle' && (
+            <>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#4F46E5', letterSpacing: 0.5, marginBottom: 8 }}>LOG DE VUELO DJI (OPCIONAL)</div>
+              <button onClick={() => fileRef.current?.click()} className="btn" style={{ width: '100%', background: '#4F46E5', color: '#fff', fontSize: 13, padding: '10px 0', borderRadius: 10 }}>
+                Cargar log DJI
+              </button>
+              <div style={{ fontSize: 11, color: 'var(--texto-secundario)', marginTop: 6, lineHeight: 1.4 }}>
+                En DJI Pilot: Vuelo → Registros → seleccionar vuelo → Compartir → Guardar en Descargas
+              </div>
+            </>
+          )}
+          {djiStatus === 'loading' && (
+            <div style={{ textAlign: 'center', padding: '8px 0', fontSize: 13, color: '#4F46E5', fontWeight: 600 }}>
+              Leyendo log DJI...
+            </div>
+          )}
+          {djiStatus === 'done' && djiInfo && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, fontWeight: 700, color: 'var(--verde-ok)', marginBottom: 8 }}>
+                <span style={{ width: 16, height: 16, borderRadius: '50%', background: 'var(--verde-ok)', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>✓</span>
+                DATOS DEL LOG DJI
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 14px', fontSize: 12.5 }}>
+                <Campo label="Drone" valor={djiInfo.aircraftName || djiInfo.productType || '—'} />
+                <Campo label="S/N" valor={djiInfo.aircraftSn || '—'} />
+                <Campo label="Duración" valor={`${djiInfo.minutos} min`} />
+                <Campo label="Altura máx" valor={`${djiInfo.maxHeight} m`} />
+                <Campo label="Distancia" valor={`${djiInfo.totalDistance} m`} />
+                {djiInfo.batteryStart != null && <Campo label="Batería" valor={`${djiInfo.batteryStart}% → ${djiInfo.batteryEnd}%`} />}
+              </div>
+              {djiInfo.encrypted && (
+                <div style={{ fontSize: 11, color: '#B45309', marginTop: 6 }}>
+                  Log encriptado (v{djiInfo.version}) — datos básicos extraídos
+                </div>
+              )}
+              <button onClick={() => { setDjiStatus('idle'); setDjiInfo(null); }} style={{ fontSize: 11, color: '#4F46E5', background: 'none', border: 'none', cursor: 'pointer', marginTop: 6, padding: 0, textDecoration: 'underline' }}>
+                Cambiar archivo
+              </button>
+            </>
+          )}
+          {djiStatus === 'error' && (
+            <>
+              <div style={{ fontSize: 12.5, color: '#DC2626', fontWeight: 600, marginBottom: 4 }}>{djiError}</div>
+              <button onClick={() => { setDjiStatus('idle'); setDjiError(''); }} className="btn" style={{ width: '100%', background: '#4F46E5', color: '#fff', fontSize: 13, padding: '10px 0', borderRadius: 10 }}>
+                Reintentar
+              </button>
+            </>
+          )}
         </div>
 
         {esOtroVuelo && (
