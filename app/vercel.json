@@ -8,14 +8,6 @@
     {
       "path": "/api/bitacora/cron",
       "schedule": "0 10 * * *"
-    },
-    {
-      "path": "/api/onedrive/monthly-rollover",
-      "schedule": "0 0 30 2 *"
-    },
-    {
-      "path": "/api/onedrive/restore-active-file",
-      "schedule": "0 0 30 2 *"
     }
   ],
   "functions": {

@@ -66,30 +66,28 @@ export async function resolveShareLink(shareUrl, accessToken) {
   };
 }
 
+const MESES_ES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
+
+/** Nombre del mes actual en español, según la fecha real en Chile. */
+export function nombreMesActual() {
+  const now = new Date();
+  const chile = new Date(now.toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+  return MESES_ES[chile.getMonth()];
+}
+
 /**
- * Devuelve el archivo Excel "activo" de la bitácora (dónde escribir el mes
- * actual). Si el rollover mensual ya corrió, lee driveId/itemId/sheetName
- * guardados en app_config (se actualizan cada mes, sin redeploy). Si nunca
- * corrió (o app_config no tiene el dato), cae al comportamiento legado:
- * resolver ONEDRIVE_SHARE_URL + ONEDRIVE_SHEET_NAME desde variables de
- * entorno, como hacía la app antes de la automatización mensual.
+ * Devuelve el archivo Excel de la bitácora y la pestaña donde escribir hoy.
+ * El archivo (ONEDRIVE_SHARE_URL) es siempre el mismo, para siempre — nunca
+ * se crea ni se reemplaza. La pestaña se calcula por la fecha real (nunca
+ * se guarda en ningún lado, así que no puede quedar desincronizada): cada
+ * mes hay que crear a mano, con anticipación, una pestaña nueva con el
+ * nombre del mes en español (ej. "Septiembre") en ese mismo archivo.
  */
 export async function getArchivoActivo(supabase, accessToken) {
-  const { data } = await supabase
-    .from('app_config')
-    .select('key, value')
-    .in('key', ['onedrive_drive_id', 'onedrive_item_id', 'onedrive_sheet_name']);
-  const map = Object.fromEntries((data || []).map((r) => [r.key, r.value]));
-
-  if (map.onedrive_drive_id && map.onedrive_item_id) {
-    return {
-      driveId: map.onedrive_drive_id,
-      itemId: map.onedrive_item_id,
-      sheetName: map.onedrive_sheet_name || process.env.ONEDRIVE_SHEET_NAME || 'Agosto',
-    };
-  }
-
   const shareUrl = process.env.ONEDRIVE_SHARE_URL;
   const { driveId, itemId } = await resolveShareLink(shareUrl, accessToken);
-  return { driveId, itemId, sheetName: process.env.ONEDRIVE_SHEET_NAME || 'Agosto' };
+  return { driveId, itemId, sheetName: nombreMesActual() };
 }
