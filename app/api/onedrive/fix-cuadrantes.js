@@ -1,50 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-function encodeShareUrl(url) {
-  const base64 = Buffer.from(url, 'utf-8').toString('base64');
-  return 'u!' + base64.replace(/=+$/, '').replace(/\//g, '_').replace(/\+/g, '-');
-}
-
-async function getAccessToken(supabase) {
-  const clientId = process.env.ONEDRIVE_CLIENT_ID;
-  const clientSecret = process.env.ONEDRIVE_CLIENT_SECRET;
-  const tenantId = process.env.ONEDRIVE_TENANT_ID;
-
-  const { data: rtRow } = await supabase
-    .from('app_config')
-    .select('value')
-    .eq('key', 'onedrive_refresh_token')
-    .single();
-
-  if (!rtRow) throw new Error('No hay refresh_token. Autoriza primero en /api/auth/login');
-
-  const tokenRes = await fetch(
-    `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        refresh_token: rtRow.value,
-        grant_type: 'refresh_token',
-        scope: 'offline_access Files.ReadWrite',
-      }),
-    }
-  );
-
-  const tokens = await tokenRes.json();
-  if (!tokens.access_token) throw new Error('Token refresh falló: ' + JSON.stringify(tokens));
-
-  if (tokens.refresh_token) {
-    await supabase.from('app_config').upsert({
-      key: 'onedrive_refresh_token',
-      value: tokens.refresh_token,
-    }, { onConflict: 'key' });
-  }
-
-  return tokens.access_token;
-}
+import { getSupabase, getAccessToken, getArchivoActivo } from '../_lib/onedrive.js';
 
 /**
  * Endpoint de un solo uso: recorre el Excel de bitácora en OneDrive y corrige
@@ -58,26 +12,15 @@ async function getAccessToken(supabase) {
  */
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  const authHeader = req.headers['authorization'];
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
 
   try {
-    const supabase = createClient(
-      process.env.VITE_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_KEY
-    );
-
+    const supabase = getSupabase();
     const accessToken = await getAccessToken(supabase);
-    const shareUrl = process.env.ONEDRIVE_SHARE_URL;
-    const sheetName = process.env.ONEDRIVE_SHEET_NAME || 'Agosto';
-    const encodedShare = encodeShareUrl(shareUrl);
-
-    const itemRes = await fetch(
-      `https://graph.microsoft.com/v1.0/shares/${encodedShare}/driveItem`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-    if (!itemRes.ok) throw new Error('No se pudo resolver el archivo: ' + await itemRes.text());
-    const driveItem = await itemRes.json();
-    const driveId = driveItem.parentReference.driveId;
-    const itemId = driveItem.id;
+    const { driveId, itemId, sheetName } = await getArchivoActivo(supabase, accessToken);
 
     const usedRangeUrl =
       `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}` +
@@ -120,9 +63,16 @@ export default async function handler(req, res) {
       }
     });
 
+    // Límite por invocación: cada PATCH a Graph API toma tiempo y el
+    // serverless function tiene un máximo de duración. Si sobran filas,
+    // conviene volver a llamar el endpoint (es idempotente) en vez de
+    // arriesgar un timeout a mitad de camino.
+    const LOTE_MAX = 40;
+    const loteActual = pendientes.slice(0, LOTE_MAX);
+
     let actualizadas = 0;
     const errores = [];
-    for (const p of pendientes) {
+    for (const p of loteActual) {
       const rangeAddr = `${p.col}${p.excelRow}:${p.col}${p.excelRow}`;
       const writeUrl =
         `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}` +
@@ -139,7 +89,15 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.status(200).json({ ok: true, filasRevisadas: rows.length - 1, encontradas: pendientes.length, actualizadas, errores });
+    return res.status(200).json({
+      ok: true,
+      filasRevisadas: rows.length - 1,
+      encontradas: pendientes.length,
+      procesadasEnEsteLote: loteActual.length,
+      actualizadas,
+      restantes: pendientes.length - loteActual.length,
+      errores,
+    });
   } catch (e) {
     console.error('Fix cuadrantes error:', e);
     return res.status(500).json({ error: e.message });
