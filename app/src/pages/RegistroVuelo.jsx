@@ -9,7 +9,6 @@ import ScreenHeader from '../components/ScreenHeader';
 const ALTURAS = ['60 metros', '70 metros', '80 metros', '90 metros', '100 metros', '110 metros', '120 metros', '200 metros', '300 metros', '400 metros', '500 metros', '600 metros'];
 const DISTANCIAS = ['100 metros', '200 metros', '300 metros', '400 metros', '500 metros', '600 metros', '700 metros', '800 metros', '900 metros', '1000 metros'];
 const AERONAVES = ['DUAL', 'AUTEL', '3TD', 'MATRICE 300', 'AIR 2', 'ADVANCED', 'ZOOM'];
-const TIPIFICACIONES_TRAMO = ['Paneo Preventivo', 'Paneo Focalizado', 'Informe Situacional', 'Constancia de Servicio'];
 const ESTADOS = ['Realizado', 'Interrumpido', 'Reprogramado'];
 const TURNOS_SELECT = ['A', 'B', 'N', 'SE'];
 
@@ -244,20 +243,6 @@ export default function RegistroVuelo() {
             ))}
           </div>
         </div>
-
-        {esTramo && (
-          <div>
-            <label className="field-label">Tipificación</label>
-            <div className="field-wrap">
-              <select className="field-select" value={form.tipificacion} onChange={(e) => setField('tipificacion', e.target.value)}>
-                {TIPIFICACIONES_TRAMO.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-              <span className="field-caret">▼</span>
-            </div>
-          </div>
-        )}
 
         <div>
           <label className="field-label">Estado del vuelo</label>
