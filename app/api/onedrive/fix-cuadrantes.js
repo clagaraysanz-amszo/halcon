@@ -87,6 +87,19 @@ export default async function handler(req, res) {
     const usedData = await usedRes.json();
     const rows = usedData.values || [];
 
+    if (req.query?.debug === '1') {
+      const muestra = rows
+        .slice(1)
+        .map((row, i) => ({ excelRow: i + 2, cuadrante: row[7], distancia: row[10] }))
+        .filter((r) => {
+          const c = String(r.cuadrante ?? '').toUpperCase();
+          const d = String(r.distancia ?? '');
+          return c.includes('FARELLONES') || /^\d+$/.test(d.trim());
+        })
+        .slice(0, 20);
+      return res.status(200).json({ ok: true, totalFilas: rows.length, muestra });
+    }
+
     // Columnas (0-index): 0 Fecha, 1 Operador, 2 Modelo De RPA, 3 Turno,
     // 4 Tipificacion, 5 Tramo, 6 Ubicacion, 7 Cuadrante, 8 Duracion Vuelo,
     // 9 Altura Metros, 10 Distancia Recorrida, 11 Funcionario.
