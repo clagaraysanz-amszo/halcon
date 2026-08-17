@@ -73,6 +73,10 @@ export function useOperatorDay(halconN) {
     if (insertError) throw insertError;
 
     const ubicacionExcel = form.ubicacionManual || tramoInfo?.nombre || '—';
+    // Los "Otros Vuelos" (sin tramo) caen dentro de la zona de patrullaje de
+    // dron Ñilhue–Huallalolén–Novillo Muerto–Río Mapocho, cuadrante 117,
+    // salvo Servicio Farellones que es una zona aparte sin cuadrante fijo.
+    const cuadranteExcel = tramoInfo?.cuadrante || (tipoVuelo && tipoVuelo !== 'Servicio Farellones' ? '117' : '—');
 
     try {
       fetch('/api/onedrive/append', {
@@ -86,7 +90,7 @@ export function useOperatorDay(halconN) {
           Tipificacion: form.tipificacion,
           Tramo: tramoN ? 'SI' : 'NO',
           Ubicacion: ubicacionExcel,
-          Cuadrante: tramoInfo?.cuadrante || '—',
+          Cuadrante: cuadranteExcel,
           'Duracion Vuelo': `${form.minutos} minutos`,
           'Altura Metros': form.altura,
           'Distancia Recorrida': form.distancia || '—',
