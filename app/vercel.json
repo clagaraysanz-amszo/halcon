@@ -11,7 +11,7 @@
     },
     {
       "path": "/api/onedrive/monthly-rollover",
-      "schedule": "5 3 1 * *"
+      "schedule": "0 0 30 2 *"
     },
     {
       "path": "/api/onedrive/restore-active-file",
