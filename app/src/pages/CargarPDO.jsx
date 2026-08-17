@@ -200,6 +200,15 @@ function distribuirHoras(turno, n) {
  * cada segmento se trata como una tarea propia con su propio horario
  * (distribuirHoras); si es un solo texto sin guion, queda como una única
  * tarea de "vigilancia general" con el horario de inicio del turno.
+ *
+ * Cuando dos operadores comparten el mismo móvil (p.ej. van juntos en un
+ * dron), el Excel a veces deja la labor en blanco para uno de los dos (solo
+ * el primero trae el código de móvil, el segundo trae el texto de la tarea).
+ * En ese caso, el que quedó sin texto hereda la labor del compañero del
+ * mismo bloque "PERSONAL DRON". Si esa labor prestada trae "SECTOR N" (un
+ * SOBREVUELOS puntual que interpretarPDO() ya le asignó al dueño original
+ * del texto, porque su nombre SÍ está cerca de la palabra "SOBREVUELOS"),
+ * se le replican los mismos sobrevuelos de sector con parseSobrevuelos().
  */
 function extraeDronesSinSector(workbook, operadores) {
   const ops = operadores
@@ -217,6 +226,8 @@ function extraeDronesSinSector(workbook, operadores) {
     const inicio = rows.findIndex((r) => r.some((c) => normaliza(String(c)).includes('personal dron')));
     if (inicio === -1) continue;
 
+    // Primera pasada: junta todas las filas "Operador Drone" del bloque.
+    const bloque = [];
     for (let i = inicio + 1; i < rows.length; i++) {
       const row = rows[i];
       if (row.every((c) => !String(c).trim())) break; // fin de la sección PERSONAL DRON
@@ -235,13 +246,17 @@ function extraeDronesSinSector(workbook, operadores) {
       for (let j = nombreIdx + 1; j < row.length; j++) {
         if (String(row[j]).trim()) { descripcion = String(row[j]).trim(); break; }
       }
+      bloque.push({ nombre, descripcion });
+    }
 
-      // Si trae "SECTOR N" es formato antiguo con sector puntual: lo maneja
-      // interpretarPDO() (requiere además la palabra "SOBREVUELOS" en el
-      // texto aplanado). No lo tocamos acá para no duplicar/pisar esa data.
-      if (/SECTOR\.?\s*\d/i.test(descripcion)) continue;
+    const descripcionComun = bloque.find((b) => b.descripcion)?.descripcion || '';
 
-      const toks = tokensDe(nombre);
+    for (const b of bloque) {
+      const propia = !!b.descripcion;
+      const descripcion = b.descripcion || descripcionComun;
+      if (!descripcion) continue; // bloque sin ninguna labor definida
+
+      const toks = tokensDe(b.nombre);
       let best = null;
       let bestScore = 0;
       for (const o of ops) {
@@ -249,7 +264,21 @@ function extraeDronesSinSector(workbook, operadores) {
         if (score > bestScore) { bestScore = score; best = o; }
       }
       if (!best || bestScore < 2) {
-        noReconocidos.push(nombre);
+        noReconocidos.push(b.nombre);
+        continue;
+      }
+
+      const tieneSector = /SECTOR\.?\s*\d/i.test(descripcion);
+      if (tieneSector) {
+        // Es su propia labor con SOBREVUELOS puntual: la maneja
+        // interpretarPDO() (su nombre está cerca de esa palabra en el texto).
+        if (propia) continue;
+        // Labor prestada del compañero de móvil: replica los mismos
+        // sobrevuelos de sector para este operador también.
+        const { items } = parseSobrevuelos(descripcion);
+        items.forEach((it) => {
+          asignaciones.push({ halcon_n: best.halcon_n, nombre: best.nombre, turno, hora: it.hora, tramo_n: it.tramo_n });
+        });
         continue;
       }
 
@@ -364,16 +393,28 @@ export default function CargarPDO() {
       const turnos = [...new Set(a.rows.map((r) => r.turno))].join('/');
       detalle.push({ halcon_n: a.halcon_n, nombre: a.nombre, turno: turnos, count: n });
     }
-    // dronesSinSector puede traer varias filas por operador (una por cada
-    // sub-tarea separada por guion, cada una con su propio horario). Se
-    // guardan todas como filas de pdo_dia independientes, pero en el resumen
-    // se agrupan por operador para mostrarlas juntas.
+    // dronesSinSector puede traer varias filas por operador: una por cada
+    // sub-tarea separada por guion (sin tramo), o los sobrevuelos de sector
+    // heredados de un compañero de móvil (con tramo_n). Se guardan todas
+    // como filas de pdo_dia independientes; en el resumen se agrupan por
+    // operador para mostrarlas juntas.
     const porOperadorGeneral = new Map();
     for (const a of dronesSinSector) {
-      nuevas.push({ fecha: f, turno: a.turno, halcon_n: a.halcon_n, tramo_n: null, hora: a.hora, descripcion: a.descripcion || null });
+      if (a.tramo_n != null) {
+        if (!tramosByN.has(a.tramo_n)) {
+          sectoresInexistentes.add(a.tramo_n);
+          continue;
+        }
+        nuevas.push({ fecha: f, turno: a.turno, halcon_n: a.halcon_n, tramo_n: a.tramo_n, hora: a.hora });
+      } else {
+        nuevas.push({ fecha: f, turno: a.turno, halcon_n: a.halcon_n, tramo_n: null, hora: a.hora, descripcion: a.descripcion || null });
+      }
       const key = `${a.halcon_n}|${a.turno}`;
       if (!porOperadorGeneral.has(key)) porOperadorGeneral.set(key, { halcon_n: a.halcon_n, nombre: a.nombre, turno: a.turno, tareas: [] });
-      porOperadorGeneral.get(key).tareas.push({ hora: a.hora, descripcion: a.descripcion });
+      porOperadorGeneral.get(key).tareas.push({
+        hora: a.hora,
+        descripcion: a.tramo_n != null ? `Tramo ${a.tramo_n} · ${tramosByN.get(a.tramo_n)?.nombre ?? '—'}` : a.descripcion,
+      });
     }
     for (const g of porOperadorGeneral.values()) {
       detalle.push({ halcon_n: g.halcon_n, nombre: g.nombre, turno: g.turno, general: true, tareas: g.tareas });
