@@ -155,14 +155,51 @@ function interpretarPDO(text, operadores) {
 
 const SHEET_TURNO = { 'TURNO A-SE': 'A', 'TURNO B-C': 'B', 'TURNO N': 'N' };
 const TURNO_HORA_DEFAULT = { A: '07:00', B: '14:00', N: '22:00' };
+// Plantilla fija cuando la labor sin horario trae exactamente 3 sub-tareas
+// (separadas por guion): primera / intermedia / última del turno.
+const DEFAULT_HORAS_SIN_HORARIO = { A: ['08:00', '11:00', '13:00'], B: ['15:00', '18:00', '20:00'], N: ['23:00', '02:00', '04:30'] };
+// Ventana operativa de cada turno en minutos desde medianoche (N cruza a 31h = 07:00 del día siguiente).
+const TURNO_WINDOW_MIN = { A: [7 * 60, 14 * 60], B: [14 * 60, 22 * 60], N: [22 * 60, 31 * 60] };
+
+function minutosAHora(totalMin) {
+  const h = Math.floor(totalMin / 60) % 24;
+  const m = Math.round(totalMin % 60);
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/**
+ * Reparte N tareas sin horario dentro de la ventana del turno. Para el caso
+ * más común (3 tareas) usa los horarios fijos que definió operaciones; para
+ * cualquier otra cantidad, las distribuye parejo dejando un margen de 30 min
+ * en los bordes del turno.
+ */
+function distribuirHoras(turno, n) {
+  const fijos = DEFAULT_HORAS_SIN_HORARIO[turno];
+  if (fijos && n === fijos.length) return fijos;
+  const [startMin, endMin] = TURNO_WINDOW_MIN[turno] || TURNO_WINDOW_MIN.A;
+  const buffer = 30;
+  const from = startMin + buffer;
+  const span = Math.max(0, endMin - buffer - from);
+  const horas = [];
+  for (let i = 0; i < n; i++) {
+    horas.push(minutosAHora(from + (span * (i + 0.5)) / n));
+  }
+  return horas;
+}
 
 /**
  * Detecta operadores de dron listados en la sección "PERSONAL DRON" de cada
  * hoja de turno cuando el PDO NO trae sobrevuelos de sector puntuales (solo
- * pasa por restricciones de lluvia: se les asigna "vigilancia general" de
- * zona en vez de "SOBREVUELOS: ... SECTOR N"). A diferencia de
- * interpretarPDO(), trabaja directo sobre las filas del Excel (no sobre el
- * texto aplanado) para ubicar la sección con precisión.
+ * pasa por restricciones de lluvia: se les asigna vigilancia de zona en vez
+ * de "SOBREVUELOS: ... SECTOR N"). A diferencia de interpretarPDO(), trabaja
+ * directo sobre las filas del Excel (no sobre el texto aplanado) para ubicar
+ * la sección con precisión.
+ *
+ * Si la labor asignada trae varios puntos separados por guion (p.ej.
+ * "VIGILANCIA SECTOR ÑILHUE - HUALLALOLEN - NOVILLO MUERTO - RIO MAPOCHO...")
+ * cada segmento se trata como una tarea propia con su propio horario
+ * (distribuirHoras); si es un solo texto sin guion, queda como una única
+ * tarea de "vigilancia general" con el horario de inicio del turno.
  */
 function extraeDronesSinSector(workbook, operadores) {
   const ops = operadores
@@ -199,6 +236,11 @@ function extraeDronesSinSector(workbook, operadores) {
         if (String(row[j]).trim()) { descripcion = String(row[j]).trim(); break; }
       }
 
+      // Si trae "SECTOR N" es formato antiguo con sector puntual: lo maneja
+      // interpretarPDO() (requiere además la palabra "SOBREVUELOS" en el
+      // texto aplanado). No lo tocamos acá para no duplicar/pisar esa data.
+      if (/SECTOR\.?\s*\d/i.test(descripcion)) continue;
+
       const toks = tokensDe(nombre);
       let best = null;
       let bestScore = 0;
@@ -210,7 +252,16 @@ function extraeDronesSinSector(workbook, operadores) {
         noReconocidos.push(nombre);
         continue;
       }
-      asignaciones.push({ halcon_n: best.halcon_n, nombre: best.nombre, turno, descripcion });
+
+      const segmentos = descripcion.split(/\s-\s/).map((s) => s.trim()).filter(Boolean);
+      if (segmentos.length >= 2) {
+        const horas = distribuirHoras(turno, segmentos.length);
+        segmentos.forEach((seg, idx) => {
+          asignaciones.push({ halcon_n: best.halcon_n, nombre: best.nombre, turno, hora: horas[idx], descripcion: seg });
+        });
+      } else {
+        asignaciones.push({ halcon_n: best.halcon_n, nombre: best.nombre, turno, hora: TURNO_HORA_DEFAULT[turno], descripcion });
+      }
     }
   }
 
@@ -313,9 +364,19 @@ export default function CargarPDO() {
       const turnos = [...new Set(a.rows.map((r) => r.turno))].join('/');
       detalle.push({ halcon_n: a.halcon_n, nombre: a.nombre, turno: turnos, count: n });
     }
+    // dronesSinSector puede traer varias filas por operador (una por cada
+    // sub-tarea separada por guion, cada una con su propio horario). Se
+    // guardan todas como filas de pdo_dia independientes, pero en el resumen
+    // se agrupan por operador para mostrarlas juntas.
+    const porOperadorGeneral = new Map();
     for (const a of dronesSinSector) {
-      nuevas.push({ fecha: f, turno: a.turno, halcon_n: a.halcon_n, tramo_n: null, hora: TURNO_HORA_DEFAULT[a.turno], descripcion: a.descripcion || null });
-      detalle.push({ halcon_n: a.halcon_n, nombre: a.nombre, turno: a.turno, count: 0, general: true, descripcion: a.descripcion });
+      nuevas.push({ fecha: f, turno: a.turno, halcon_n: a.halcon_n, tramo_n: null, hora: a.hora, descripcion: a.descripcion || null });
+      const key = `${a.halcon_n}|${a.turno}`;
+      if (!porOperadorGeneral.has(key)) porOperadorGeneral.set(key, { halcon_n: a.halcon_n, nombre: a.nombre, turno: a.turno, tareas: [] });
+      porOperadorGeneral.get(key).tareas.push({ hora: a.hora, descripcion: a.descripcion });
+    }
+    for (const g of porOperadorGeneral.values()) {
+      detalle.push({ halcon_n: g.halcon_n, nombre: g.nombre, turno: g.turno, general: true, tareas: g.tareas });
     }
     setPending((p) => [...p, ...nuevas]);
     setResumen({
@@ -603,17 +664,21 @@ export default function CargarPDO() {
               </div>
               <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--texto-titulo)', marginBottom: 7 }}>Operadores detectados</div>
               {resumen.detalle.map((d) => (
-                <div key={d.halcon_n} style={{ padding: '3px 0' }}>
+                <div key={`${d.halcon_n}-${d.turno}`} style={{ padding: '3px 0' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--texto-titulo)' }}>
                     <span style={{ width: 24, height: 24, flex: 'none', borderRadius: 7, background: 'var(--azul)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800 }}>{d.halcon_n}</span>
                     <span style={{ flex: 1, minWidth: 0 }}>Halcón {d.halcon_n} · {d.nombre}</span>
                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--texto-secundario)', flex: 'none' }}>
-                      Turno {d.turno} · {d.general ? 'Sin sector' : `${d.count} vuelos`}
+                      Turno {d.turno} · {d.general ? `${d.tareas.length} tarea${d.tareas.length > 1 ? 's' : ''} sin sector` : `${d.count} vuelos`}
                     </span>
                   </div>
-                  {d.general && d.descripcion && (
-                    <div style={{ fontSize: 11, color: 'var(--texto-secundario)', marginLeft: 32, marginTop: 2, lineHeight: 1.4 }}>
-                      {d.descripcion}
+                  {d.general && d.tareas && (
+                    <div style={{ marginLeft: 32, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      {d.tareas.map((t, i) => (
+                        <div key={i} style={{ fontSize: 11, color: 'var(--texto-secundario)', lineHeight: 1.4 }}>
+                          <strong>{t.hora}</strong> · {t.descripcion}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
