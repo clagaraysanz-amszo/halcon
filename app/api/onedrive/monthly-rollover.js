@@ -78,7 +78,12 @@ export default async function handler(req, res) {
       .maybeSingle();
 
     if (yaCorrioRow?.value === mesKey && !req.query?.forzar) {
-      return res.status(200).json({ ok: true, skip: true, mensaje: `Ya se creó la bitácora de ${mesNombre} ${anio}.` });
+      const { data: actual } = await supabase
+        .from('app_config')
+        .select('key, value')
+        .in('key', ['onedrive_drive_id', 'onedrive_item_id', 'onedrive_sheet_name', 'onedrive_current_month']);
+      console.log('[monthly-rollover] skip, ya corrió para', mesKey, '| app_config actual:', JSON.stringify(actual));
+      return res.status(200).json({ ok: true, skip: true, mensaje: `Ya se creó la bitácora de ${mesNombre} ${anio}.`, actual });
     }
 
     const accessToken = await getAccessToken(supabase);
