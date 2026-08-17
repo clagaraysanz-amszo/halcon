@@ -47,11 +47,13 @@ async function getAccessToken(supabase) {
 }
 
 /**
- * Endpoint de un solo uso: recorre el Excel de bitácora en OneDrive y rellena
- * la columna Cuadrante (H) solo en filas con Tramo=NO cuya celda esté vacía
- * o en "—" (nunca toca filas que ya tengan un dato). Servicio Farellones
- * recibe "FARELLONES"; el resto de Otros Vuelos recibe "117" (zona de
- * patrullaje Ñilhue–Huallalolén–Novillo Muerto–Río Mapocho).
+ * Endpoint de un solo uso: recorre el Excel de bitácora en OneDrive y corrige
+ * dos columnas del histórico, sin tocar nada que ya esté bien:
+ *   - Cuadrante (H): en filas Tramo=NO, si está vacía/"—" o dice
+ *     "FARELLONES", queda en "117" (todos los Otros Vuelos, incluido
+ *     Servicio Farellones, son cuadrante 117).
+ *   - Distancia Recorrida (K): si es un número pelado (sin "metros"), se le
+ *     agrega el sufijo " metros".
  * Idempotente: correrlo de nuevo no vuelve a tocar lo ya corregido.
  */
 export default async function handler(req, res) {
@@ -86,23 +88,29 @@ export default async function handler(req, res) {
     const rows = usedData.values || [];
 
     // Columnas (0-index): 0 Fecha, 1 Operador, 2 Modelo De RPA, 3 Turno,
-    // 4 Tipificacion, 5 Tramo, 6 Ubicacion, 7 Cuadrante, ...
+    // 4 Tipificacion, 5 Tramo, 6 Ubicacion, 7 Cuadrante, 8 Duracion Vuelo,
+    // 9 Altura Metros, 10 Distancia Recorrida, 11 Funcionario.
     const pendientes = [];
     rows.forEach((row, idx) => {
       if (idx === 0) return; // encabezado
+      const excelRow = idx + 1;
+
       const tramo = String(row[5] ?? '').trim().toUpperCase();
-      if (tramo !== 'NO') return;
-      const cuadrante = String(row[7] ?? '').trim();
-      if (cuadrante && cuadrante !== '—' && cuadrante !== '-') return; // ya tiene dato, no tocar
-      const tipificacion = String(row[4] ?? '').trim();
-      const valor = tipificacion === 'Servicio Farellones' ? 'FARELLONES' : '117';
-      pendientes.push({ excelRow: idx + 1, valor });
+      const cuadrante = String(row[7] ?? '').trim().toUpperCase();
+      if (tramo === 'NO' && (!cuadrante || cuadrante === '—' || cuadrante === '-' || cuadrante === 'FARELLONES')) {
+        pendientes.push({ col: 'H', excelRow, valor: '117' });
+      }
+
+      const distancia = String(row[10] ?? '').trim();
+      if (/^\d+$/.test(distancia)) {
+        pendientes.push({ col: 'K', excelRow, valor: `${distancia} metros` });
+      }
     });
 
     let actualizadas = 0;
     const errores = [];
     for (const p of pendientes) {
-      const rangeAddr = `H${p.excelRow}:H${p.excelRow}`;
+      const rangeAddr = `${p.col}${p.excelRow}:${p.col}${p.excelRow}`;
       const writeUrl =
         `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${itemId}` +
         `/workbook/worksheets('${encodeURIComponent(sheetName)}')/range(address='${rangeAddr}')`;
@@ -114,7 +122,7 @@ export default async function handler(req, res) {
       if (writeRes.ok) {
         actualizadas++;
       } else {
-        errores.push({ fila: p.excelRow, error: await writeRes.text() });
+        errores.push({ fila: p.excelRow, col: p.col, error: await writeRes.text() });
       }
     }
 

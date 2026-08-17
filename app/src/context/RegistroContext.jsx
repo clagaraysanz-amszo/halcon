@@ -6,7 +6,7 @@ export function blankForm() {
   return {
     altura: '',
     minutos: 20,
-    distancia: 400,
+    distancia: '400 metros',
     aeronave: 'DUAL',
     tipificacion: 'Paneo Preventivo',
     estado: 'Realizado',

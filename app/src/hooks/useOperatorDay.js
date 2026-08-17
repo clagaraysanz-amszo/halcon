@@ -73,12 +73,9 @@ export function useOperatorDay(halconN) {
     if (insertError) throw insertError;
 
     const ubicacionExcel = form.ubicacionManual || tramoInfo?.nombre || '—';
-    // Los "Otros Vuelos" (sin tramo) caen dentro de la zona de patrullaje de
-    // dron Ñilhue–Huallalolén–Novillo Muerto–Río Mapocho, cuadrante 117.
-    // Servicio Farellones es una zona aparte, sin tramos ni cuadrante propio:
-    // se identifica con el código fijo "FARELLONES".
-    const cuadranteExcel = tramoInfo?.cuadrante
-      || (tipoVuelo === 'Servicio Farellones' ? 'FARELLONES' : tipoVuelo ? '117' : '—');
+    // Todos los "Otros Vuelos" (sin tramo, incluido Servicio Farellones)
+    // caen dentro del cuadrante 117.
+    const cuadranteExcel = tramoInfo?.cuadrante || (tipoVuelo ? '117' : '—');
 
     try {
       fetch('/api/onedrive/append', {
