@@ -86,9 +86,21 @@ export default async function handler(req, res) {
     const templateShareUrl = process.env.ONEDRIVE_TEMPLATE_SHARE_URL;
     if (!templateShareUrl) throw new Error('Falta la variable de entorno ONEDRIVE_TEMPLATE_SHARE_URL');
     const template = await resolveShareLink(templateShareUrl, accessToken);
+    console.log('[monthly-rollover] plantilla resuelta:', JSON.stringify(template));
 
     const nombreArchivo = `Bitácora Halcón - ${mesNombre} ${anio}.xlsx`;
     const nuevoItemId = await copiarPlantilla(template, nombreArchivo, accessToken);
+    console.log('[monthly-rollover] copia creada, nuevoItemId:', nuevoItemId);
+
+    // Confirma el nombre REAL que quedó en OneDrive (por si Graph lo cambió,
+    // p.ej. por conflicto con un archivo existente del mismo nombre).
+    const nuevoItemRes = await fetch(
+      `https://graph.microsoft.com/v1.0/drives/${template.driveId}/items/${nuevoItemId}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    const nuevoItemData = await nuevoItemRes.json();
+    const nombreReal = nuevoItemData.name || nombreArchivo;
+    console.log('[monthly-rollover] nombre real en OneDrive:', nombreReal, '| pedido:', nombreArchivo);
 
     // Detecta el nombre real de la primera hoja del archivo nuevo (en vez de
     // asumirlo), por si la plantilla usa un nombre de hoja distinto.
@@ -99,6 +111,7 @@ export default async function handler(req, res) {
     if (!sheetsRes.ok) throw new Error('No se pudo leer las hojas del archivo nuevo: ' + await sheetsRes.text());
     const sheetsData = await sheetsRes.json();
     const sheetName = sheetsData.value?.[0]?.name || 'Hoja1';
+    console.log('[monthly-rollover] hoja detectada:', sheetName);
 
     await supabase.from('app_config').upsert([
       { key: 'onedrive_drive_id', value: template.driveId },
@@ -107,14 +120,17 @@ export default async function handler(req, res) {
       { key: 'onedrive_current_month', value: mesKey },
     ], { onConflict: 'key' });
 
-    return res.status(200).json({
+    const resultado = {
       ok: true,
       mes: `${mesNombre} ${anio}`,
-      archivo: nombreArchivo,
+      archivoPedido: nombreArchivo,
+      archivoReal: nombreReal,
       driveId: template.driveId,
       itemId: nuevoItemId,
       sheetName,
-    });
+    };
+    console.log('[monthly-rollover] resultado final:', JSON.stringify(resultado));
+    return res.status(200).json(resultado);
   } catch (e) {
     console.error('Monthly rollover error:', e);
     return res.status(500).json({ error: e.message });
