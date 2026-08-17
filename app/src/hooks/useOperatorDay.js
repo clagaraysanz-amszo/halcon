@@ -101,6 +101,7 @@ export function useOperatorDay(halconN) {
         .update({ estado: 'Realizado' })
         .eq('id', pdoRow.id);
       if (updateError) throw updateError;
+      await marcarCompañero(pdoRow, { estado: 'Realizado' });
     }
 
     await refetch();
@@ -113,7 +114,26 @@ export function useOperatorDay(halconN) {
       .update({ estado: 'No realizado', motivo: motivo || null })
       .eq('id', pdoRow.id);
     if (updateError) throw updateError;
+    await marcarCompañero(pdoRow, { estado: 'No realizado', motivo: motivo || null });
     await refetch();
+  }
+
+  // Cuando dos operadores comparten el mismo móvil/misión (mismo tramo, hora
+  // y turno el mismo día — ver extraeDronesSinSector en CargarPDO.jsx, que
+  // replica el sobrevuelo del compañero cuando el Excel deja a uno sin
+  // labor propia), volaron juntos: si uno registra o descarta el vuelo, la
+  // fila del compañero en pdo_dia se actualiza igual, para que no tenga que
+  // repetir la marca en su propia app.
+  async function marcarCompañero(pdoRow, cambios) {
+    if (pdoRow.tramo_n == null) return; // solo aplica a sobrevuelos de sector
+    await supabase
+      .from('pdo_dia')
+      .update(cambios)
+      .eq('fecha', fecha)
+      .eq('turno', pdoRow.turno)
+      .eq('tramo_n', pdoRow.tramo_n)
+      .eq('hora', pdoRow.hora)
+      .neq('halcon_n', halconN);
   }
 
   const pdoPend = pdoRows.filter((r) => r.estado === 'Pendiente').length;
