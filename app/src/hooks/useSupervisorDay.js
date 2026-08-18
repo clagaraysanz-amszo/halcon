@@ -29,7 +29,16 @@ export function useSupervisorDay(fechaOverride) {
     pdo.sort((a, b) => compararHoraTurno(a.hora, b.hora, a.turno));
 
     setPdoRows(pdo);
-    setFlights(flightsRes.data ?? []);
+
+    const fl = flightsRes.data ?? [];
+    fl.sort((a, b) => {
+      const toMin = (h) => {
+        const [hh, mm] = h.split(':').map(Number);
+        return (hh < 7 ? hh + 24 : hh) * 60 + mm;
+      };
+      return toMin(b.hora_inicio) - toMin(a.hora_inicio);
+    });
+    setFlights(fl);
     setLoading(false);
   }, [fecha]);
 
@@ -37,8 +46,8 @@ export function useSupervisorDay(fechaOverride) {
     refetch();
   }, [refetch]);
 
-  const pdoDone = pdoRows.filter((r) => r.estado === 'Realizado').length;
-  const pdoPend = pdoRows.length - pdoDone;
+  const pdoDone = pdoRows.filter((r) => r.estado === 'Realizado' || r.estado === 'Justificado').length;
+  const pdoPend = pdoRows.filter((r) => r.estado === 'Pendiente').length;
   const totalMinutos = flights.reduce((acc, f) => acc + f.minutos, 0);
 
   return {

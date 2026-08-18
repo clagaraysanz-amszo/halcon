@@ -151,6 +151,10 @@
   background: #FFF5F5;
   color: #E53E3E;
 }
+.badge--justificado {
+  background: var(--ambar-fondo);
+  color: var(--ambar-texto);
+}
 .badge--neutral {
   background: #eef2f8;
   color: var(--texto-tenue);

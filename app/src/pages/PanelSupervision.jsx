@@ -49,7 +49,7 @@ export default function PanelSupervision() {
       });
       const operadoresTurno = [...porOperador.entries()].map(([halconN, entries]) => {
         const sorted = [...entries].sort((a, b) => compararHoraTurno(a.hora, b.hora, turno));
-        const done = sorted.filter((e) => e.estado === 'Realizado').length;
+        const done = sorted.filter((e) => e.estado === 'Realizado' || e.estado === 'Justificado').length;
         return { halconN, nombre: operadoresByHalcon.get(halconN)?.nombre ?? halconN, entries: sorted, done, total: sorted.length };
       });
       return { turno, operadoresTurno };
@@ -91,7 +91,7 @@ export default function PanelSupervision() {
     return groups;
   }, [day.pdoRows, operadoresByHalcon]);
 
-  const noRealizadosCount = day.pdoRows.filter((r) => r.estado !== 'Realizado').length;
+  const noRealizadosCount = day.pdoRows.filter((r) => r.estado === 'Pendiente' || r.estado === 'No realizado').length;
 
   const [estadoOpen, setEstadoOpen] = useState(false);
   const [vuelosOpen, setVuelosOpen] = useState(false);
@@ -343,15 +343,16 @@ export default function PanelSupervision() {
                         const tramo = tramosByN.get(r.tramo_n);
                         const esRealizado = r.estado === 'Realizado';
                         const esNoRealizado = r.estado === 'No realizado';
-                        const colorFondo = esRealizado ? '#F0FFF4' : esNoRealizado ? '#FFF5F5' : 'transparent';
-                        const colorBorde = esRealizado ? '#C6F6D5' : esNoRealizado ? '#FED7D7' : 'transparent';
-                        const colorEstado = esRealizado ? 'var(--verde-ok)' : esNoRealizado ? '#E53E3E' : 'var(--ambar-texto)';
-                        const iconColor = esRealizado ? 'var(--verde-ok)' : 'var(--texto-tenue)';
+                        const esJustificado = r.estado === 'Justificado';
+                        const colorFondo = esRealizado ? '#F0FFF4' : esNoRealizado ? '#FFF5F5' : esJustificado ? 'var(--ambar-fondo)' : 'transparent';
+                        const colorBorde = esRealizado ? '#C6F6D5' : esNoRealizado ? '#FED7D7' : esJustificado ? 'var(--ambar-borde)' : 'transparent';
+                        const colorEstado = esRealizado ? 'var(--verde-ok)' : esNoRealizado ? '#E53E3E' : esJustificado ? 'var(--ambar-texto)' : 'var(--ambar-texto)';
+                        const iconColor = esRealizado ? 'var(--verde-ok)' : esJustificado ? 'var(--ambar-texto)' : 'var(--texto-tenue)';
                         return (
                           <div key={r.id} style={{ marginTop: 2, borderRadius: 8, background: colorFondo, border: colorBorde !== 'transparent' ? `1px solid ${colorBorde}` : 'none', padding: colorFondo !== 'transparent' ? '6px 9px' : '6px 0' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                               <span style={{ width: 16, flex: 'none', textAlign: 'center', fontSize: 13, fontWeight: 800, color: iconColor }}>
-                                {esRealizado ? '✓' : esNoRealizado ? '✗' : '○'}
+                                {esRealizado ? '✓' : esNoRealizado ? '✗' : esJustificado ? '⚡' : '○'}
                               </span>
                               <span style={{ flex: 'none', fontSize: 10.5, fontWeight: 700, color: 'var(--texto-tenue)', width: 44 }}>{r.hora}</span>
                               <span style={{ flex: 1, minWidth: 0, fontSize: 11.5, fontWeight: 600, color: 'var(--texto-titulo)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -359,6 +360,11 @@ export default function PanelSupervision() {
                               </span>
                               <span style={{ flex: 'none', fontSize: 10, fontWeight: 700, color: colorEstado }}>{r.estado}</span>
                             </div>
+                            {esJustificado && r.motivo && (
+                              <div style={{ marginTop: 5, marginLeft: 25, padding: '5px 9px', background: '#fff', borderRadius: 7, border: '1px solid var(--ambar-borde)', fontSize: 11, color: 'var(--texto-secundario)', fontStyle: 'italic' }}>
+                                Justificación: {r.motivo}
+                              </div>
+                            )}
                             {esNoRealizado && r.motivo && (
                               <div style={{ marginTop: 5, marginLeft: 25, padding: '5px 9px', background: '#fff', borderRadius: 7, border: '1px solid #FED7D7', fontSize: 11, color: 'var(--texto-secundario)', fontStyle: 'italic' }}>
                                 Motivo: {r.motivo}

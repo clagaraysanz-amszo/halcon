@@ -121,6 +121,16 @@ export function useOperatorDay(halconN) {
     await refetch();
   }
 
+  async function markJustificado(pdoRow, motivo) {
+    const { error: updateError } = await supabase
+      .from('pdo_dia')
+      .update({ estado: 'Justificado', motivo: motivo || null })
+      .eq('id', pdoRow.id);
+    if (updateError) throw updateError;
+    await marcarCompañero(pdoRow, { estado: 'Justificado', motivo: motivo || null });
+    await refetch();
+  }
+
   // Cuando dos operadores comparten el mismo móvil/misión (mismo tramo, hora
   // y turno el mismo día — ver extraeDronesSinSector en CargarPDO.jsx, que
   // replica el sobrevuelo del compañero cuando el Excel deja a uno sin
@@ -140,7 +150,7 @@ export function useOperatorDay(halconN) {
   }
 
   const pdoPend = pdoRows.filter((r) => r.estado === 'Pendiente').length;
-  const pdoDone = pdoRows.length - pdoPend;
+  const pdoDone = pdoRows.filter((r) => r.estado === 'Realizado' || r.estado === 'Justificado').length;
   const turno = pdoRows[0]?.turno ?? null;
   const diaLibre = pdoRows.length === 0;
   const realizadosCount = flights.filter((f) => f.estado === 'Realizado').length;
@@ -159,6 +169,7 @@ export function useOperatorDay(halconN) {
     realizadosCount,
     confirmFlight,
     markNoRealizado,
+    markJustificado,
     refetch,
   };
 }
