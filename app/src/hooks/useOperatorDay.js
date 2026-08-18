@@ -9,11 +9,12 @@ export function useOperatorDay(halconN) {
   const [flights, setFlights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [torreSCL, setTorreSCL] = useState(null);
 
   const refetch = useCallback(async () => {
     if (!halconN) return;
     setLoading(true);
-    const [pdoRes, flightsRes] = await Promise.all([
+    const [pdoRes, flightsRes, torreRes] = await Promise.all([
       supabase
         .from('pdo_dia')
         .select('*')
@@ -26,10 +27,16 @@ export function useOperatorDay(halconN) {
         .eq('halcon_n', halconN)
         .eq('fecha', fecha)
         .order('hora_inicio', { ascending: false }),
+      supabase
+        .from('torre_scl')
+        .select('*')
+        .eq('fecha', fecha)
+        .maybeSingle(),
     ]);
     if (pdoRes.error) setError(pdoRes.error);
     else if (flightsRes.error) setError(flightsRes.error);
     else setError(null);
+    setTorreSCL(torreRes.data ?? null);
     const pdo = pdoRes.data ?? [];
     const turnoDetected = pdo[0]?.turno ?? null;
     if (turnoDetected === 'N') {
@@ -149,6 +156,14 @@ export function useOperatorDay(halconN) {
       .neq('halcon_n', halconN);
   }
 
+  async function saveTorreSCL(nombre) {
+    const { error: upsertErr } = await supabase
+      .from('torre_scl')
+      .upsert({ fecha, nombre, halcon_n: halconN }, { onConflict: 'fecha' });
+    if (upsertErr) throw upsertErr;
+    setTorreSCL({ fecha, nombre, halcon_n: halconN });
+  }
+
   const pdoPend = pdoRows.filter((r) => r.estado === 'Pendiente').length;
   const pdoDone = pdoRows.filter((r) => r.estado === 'Realizado' || r.estado === 'Justificado').length;
   const turno = pdoRows[0]?.turno ?? null;
@@ -167,6 +182,8 @@ export function useOperatorDay(halconN) {
     pdoDone,
     vuelosHoy: flights.length,
     realizadosCount,
+    torreSCL,
+    saveTorreSCL,
     confirmFlight,
     markNoRealizado,
     markJustificado,

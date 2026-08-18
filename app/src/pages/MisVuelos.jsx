@@ -19,6 +19,8 @@ export default function MisVuelos() {
   const [motivo, setMotivo] = useState('');
   const [motivoJustificado, setMotivoJustificado] = useState('');
   const [saving, setSaving] = useState(false);
+  const [torreInput, setTorreInput] = useState('');
+  const [torreSaving, setTorreSaving] = useState(false);
 
   const MOTIVOS_JUSTIFICADO = [
     'Apoyo / Cooperación',
@@ -87,6 +89,75 @@ export default function MisVuelos() {
       </ScreenHeader>
 
       <div className="content content--tight">
+        {day.turno === 'N' && (
+          <div className="card" style={{ padding: '12px 14px', border: day.torreSCL ? '1.5px solid var(--verde-borde)' : '1.5px solid var(--ambar-borde)', background: day.torreSCL ? 'var(--verde-fondo-2)' : 'var(--ambar-fondo)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <span style={{ fontSize: 16 }}>🗼</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--texto-titulo)' }}>Torre de Control SCL</div>
+                <div style={{ fontSize: 10.5, color: 'var(--texto-tenue)', fontWeight: 600 }}>Notificación DGAC — Turno Nocturno</div>
+              </div>
+              {day.torreSCL && (
+                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--verde-ok)', background: 'var(--verde-fondo)', padding: '3px 8px', borderRadius: 8 }}>
+                  ✓ Registrado
+                </span>
+              )}
+            </div>
+            {day.torreSCL ? (
+              <div style={{ fontSize: 12.5, color: 'var(--texto-secundario)', fontWeight: 600 }}>
+                Supervisor: <strong style={{ color: 'var(--texto-titulo)' }}>{day.torreSCL.nombre}</strong>
+                <span style={{ fontSize: 10, color: 'var(--texto-tenue)', marginLeft: 8 }}>
+                  (Halcón {day.torreSCL.halcon_n})
+                </span>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="text"
+                  value={torreInput}
+                  onChange={(e) => setTorreInput(e.target.value)}
+                  placeholder="Nombre del supervisor en torre"
+                  style={{
+                    flex: 1,
+                    height: 38,
+                    padding: '0 11px',
+                    borderRadius: 9,
+                    border: '1px solid var(--ambar-borde)',
+                    fontSize: 13,
+                    fontFamily: 'inherit',
+                    background: '#fff',
+                  }}
+                />
+                <button
+                  onClick={async () => {
+                    if (!torreInput.trim() || torreSaving) return;
+                    setTorreSaving(true);
+                    try { await day.saveTorreSCL(torreInput.trim()); }
+                    catch (e) { alert('Error: ' + e.message); }
+                    finally { setTorreSaving(false); }
+                  }}
+                  disabled={!torreInput.trim() || torreSaving}
+                  style={{
+                    flex: 'none',
+                    height: 38,
+                    padding: '0 14px',
+                    borderRadius: 9,
+                    border: 'none',
+                    background: 'var(--ambar-texto)',
+                    color: '#fff',
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    cursor: !torreInput.trim() || torreSaving ? 'not-allowed' : 'pointer',
+                    opacity: !torreInput.trim() || torreSaving ? 0.5 : 1,
+                  }}
+                >
+                  {torreSaving ? '...' : 'Guardar'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div style={{ fontSize: 11.5, color: 'var(--texto-tenue)', fontWeight: 700, letterSpacing: 0.5, margin: '2px 2px 0' }}>
           CRONOGRAMA DE SOBREVUELOS
         </div>

@@ -149,7 +149,7 @@ function dataCell(text, width, opts = {}) {
   });
 }
 
-function buildDocx(fecha, flightsSinOrdenar, drones, operadores, tramos) {
+function buildDocx(fecha, flightsSinOrdenar, drones, operadores, tramos, torreSCL) {
   const flights = [...flightsSinOrdenar].sort(
     (a, b) => minutosNoche(a.hora_inicio || '00:00') - minutosNoche(b.hora_inicio || '00:00')
   );
@@ -229,6 +229,12 @@ function buildDocx(fecha, flightsSinOrdenar, drones, operadores, tramos) {
         children: [
           headerCell('Total vuelos', 25),
           dataCell(`${flights.length} vuelos — ${horas}h ${mins}min de vuelo total`, 75),
+        ],
+      }),
+      new TableRow({
+        children: [
+          headerCell('Supervisor Torre SCL', 25),
+          dataCell(torreSCL ? `${torreSCL.nombre} (registrado por Halcón ${torreSCL.halcon_n})` : 'No registrado', 75),
         ],
       }),
     ],
@@ -491,7 +497,7 @@ export default async function handler(req, res) {
     );
 
     // Vuelos nocturnos: turno N explícito, O hora_inicio >= 19:00, O hora_inicio < 07:00
-    const [flightsRes, dronesRes, operadoresRes, tramosRes] = await Promise.all([
+    const [flightsRes, dronesRes, operadoresRes, tramosRes, torreRes] = await Promise.all([
       supabase
         .from('registro_vuelos')
         .select('*')
@@ -500,6 +506,7 @@ export default async function handler(req, res) {
       supabase.from('drones').select('*').eq('activo', true),
       supabase.from('operadores').select('*'),
       supabase.from('tramos').select('*'),
+      supabase.from('torre_scl').select('*').eq('fecha', fecha).maybeSingle(),
     ]);
 
     if (flightsRes.error) throw flightsRes.error;
@@ -515,8 +522,9 @@ export default async function handler(req, res) {
     const drones = dronesRes.data || [];
     const operadores = operadoresRes.data || [];
     const tramos = tramosRes.data || [];
+    const torreSCL = torreRes.data || null;
 
-    const doc = buildDocx(fecha, flights, drones, operadores, tramos);
+    const doc = buildDocx(fecha, flights, drones, operadores, tramos, torreSCL);
     const buffer = await Packer.toBuffer(doc);
 
     const [, mm, dd] = fecha.split('-');
