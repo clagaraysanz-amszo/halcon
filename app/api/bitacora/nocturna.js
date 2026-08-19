@@ -511,6 +511,7 @@ export default async function handler(req, res) {
 
     if (flightsRes.error) throw flightsRes.error;
     if (dronesRes.error) throw dronesRes.error;
+    if (torreRes.error) console.warn('torre_scl query error (non-fatal):', torreRes.error.message);
 
     const allFlights = flightsRes.data || [];
     const flights = allFlights.filter((f) => {

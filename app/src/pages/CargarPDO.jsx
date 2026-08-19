@@ -6,7 +6,7 @@ import { useCatalog } from '../context/CatalogContext';
 import { fechaOperativaHoy, TURNOS, toISODate, formatFechaCorta } from '../lib/turnos';
 import ScreenHeader from '../components/ScreenHeader';
 
-const TURNO_OPTS = ['A', 'B', 'N'];
+const TURNO_OPTS = ['A', 'B', 'C', 'N'];
 
 /** Parse 'YYYY-MM-DD' como fecha LOCAL (evita el bug de UTC que corre el día
  *  hacia atrás en zonas horarias negativas como Chile UTC-4). */
@@ -153,13 +153,16 @@ function interpretarPDO(text, operadores) {
   return { asignaciones, noReconocidos };
 }
 
+// La hoja "TURNO B-C" mezcla personal de turno B con personal de turno C
+// (que comparte móvil con B y luego con N); se importa completa como 'B' y
+// las filas de operadores en turno C se reasignan a mano (turno='C').
 const SHEET_TURNO = { 'TURNO A-SE': 'A', 'TURNO B-C': 'B', 'TURNO N': 'N' };
-const TURNO_HORA_DEFAULT = { A: '07:00', B: '14:00', N: '22:00' };
+const TURNO_HORA_DEFAULT = { A: '07:00', B: '14:00', C: '16:00', N: '22:00' };
 // Plantilla fija cuando la labor sin horario trae exactamente 3 sub-tareas
 // (separadas por guion): primera / intermedia / última del turno.
 const DEFAULT_HORAS_SIN_HORARIO = { A: ['08:00', '11:00', '13:00'], B: ['15:00', '18:00', '20:00'], N: ['23:00', '02:00', '04:30'] };
-// Ventana operativa de cada turno en minutos desde medianoche (N cruza a 31h = 07:00 del día siguiente).
-const TURNO_WINDOW_MIN = { A: [7 * 60, 14 * 60], B: [14 * 60, 22 * 60], N: [22 * 60, 31 * 60] };
+// Ventana operativa de cada turno en minutos desde medianoche (N cruza a 31h = 07:00 del día siguiente; C cruza a 24h = 00:00).
+const TURNO_WINDOW_MIN = { A: [7 * 60, 14 * 60], B: [14 * 60, 22 * 60], C: [16 * 60, 24 * 60], N: [22 * 60, 31 * 60] };
 
 function minutosAHora(totalMin) {
   const h = Math.floor(totalMin / 60) % 24;
@@ -348,7 +351,7 @@ export default function CargarPDO() {
   }, [fecha, success]);
 
   const distribucion = useMemo(() => {
-    const porTurno = { A: [], B: [], N: [] };
+    const porTurno = { A: [], B: [], C: [], N: [] };
     existing.forEach((r) => porTurno[r.turno]?.push(r));
     return TURNO_OPTS.map((turno) => {
       const rows = porTurno[turno];

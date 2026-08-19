@@ -39,8 +39,8 @@ export function useOperatorDay(halconN) {
     setTorreSCL(torreRes.data ?? null);
     const pdo = pdoRes.data ?? [];
     const turnoDetected = pdo[0]?.turno ?? null;
-    if (turnoDetected === 'N') {
-      pdo.sort((a, b) => compararHoraTurno(a.hora, b.hora, 'N'));
+    if (turnoDetected === 'N' || turnoDetected === 'C') {
+      pdo.sort((a, b) => compararHoraTurno(a.hora, b.hora, turnoDetected));
     }
     setPdoRows(pdo);
     setFlights(flightsRes.data ?? []);

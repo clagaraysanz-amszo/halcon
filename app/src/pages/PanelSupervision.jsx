@@ -6,7 +6,7 @@ import { useSupervisorDay } from '../hooks/useSupervisorDay';
 import { TURNOS, compararHoraTurno, fechaOperativaHoy, toISODate } from '../lib/turnos';
 import { googleMapsUrl } from '../lib/geo';
 
-const TURNO_OPTS = ['A', 'B', 'N'];
+const TURNO_OPTS = ['A', 'B', 'C', 'N'];
 const DIAS_SEM = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 const MAX_VUELOS_INICIALES = 4;
@@ -38,7 +38,7 @@ export default function PanelSupervision() {
   const day = useSupervisorDay(fecha);
 
   const porTurno = useMemo(() => {
-    const groups = { A: [], B: [], N: [] };
+    const groups = { A: [], B: [], C: [], N: [] };
     day.pdoRows.forEach((r) => groups[r.turno]?.push(r));
     return TURNO_OPTS.map((turno) => {
       const rows = groups[turno];
@@ -70,7 +70,7 @@ export default function PanelSupervision() {
   }, [day.pdoRows, day.flights]);
 
   const estadoSobrevuelos = useMemo(() => {
-    const turnoOrder = { A: 0, B: 1, N: 2 };
+    const turnoOrder = { A: 0, B: 1, C: 2, N: 3 };
     const sorted = [...day.pdoRows].sort((a, b) => {
       const tDiff = (turnoOrder[a.turno] ?? 3) - (turnoOrder[b.turno] ?? 3);
       if (tDiff !== 0) return tDiff;

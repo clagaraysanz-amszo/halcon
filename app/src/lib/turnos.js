@@ -1,11 +1,14 @@
 // Reglas de negocio de turnos — ver README §5.
 // Turno A: 07:00–14:00 · B: 14:00–22:00 · N: 22:00–07:00 (cruza medianoche).
+// Turno C: turno extendido/compartido (p.ej. 16:00–00:00), definido caso a
+// caso en el PDO cuando un operador comparte móvil con B y luego con N.
 // El PDO se fecha por el día en que INICIA el turno, por lo que el límite
-// operativo del día completo (los 3 turnos) es las 07:00, no la medianoche.
+// operativo del día completo es las 07:00, no la medianoche.
 
 export const TURNOS = {
   A: { label: 'Mañana', horas: '07:00–14:00', dotColor: '#EE6B1E' },
   B: { label: 'Tarde', horas: '14:00–22:00', dotColor: '#2C6FB5' },
+  C: { label: 'Tarde/Noche', horas: '16:00–00:00', dotColor: '#0F9D8F' },
   N: { label: 'Noche', horas: '22:00–07:00', dotColor: '#6B5FB0' },
   SE: { label: 'Supervisor', horas: 'Variable', dotColor: '#D97706' },
 };
@@ -61,7 +64,7 @@ export function formatHoraActual(date = new Date()) {
 export function compararHoraTurno(horaA, horaB, turno) {
   const toMin = (h) => {
     const [hh, mm] = h.split(':').map(Number);
-    if (turno === 'N' && hh < 7) return (hh + 24) * 60 + mm;
+    if ((turno === 'N' || turno === 'C') && hh < 7) return (hh + 24) * 60 + mm;
     return hh * 60 + mm;
   };
   return toMin(horaA) - toMin(horaB);
