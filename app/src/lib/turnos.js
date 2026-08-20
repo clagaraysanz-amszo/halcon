@@ -8,7 +8,7 @@
 export const TURNOS = {
   A: { label: 'Mañana', horas: '07:00–14:00', dotColor: '#EE6B1E' },
   B: { label: 'Tarde', horas: '14:00–22:00', dotColor: '#2C6FB5' },
-  C: { label: 'Tarde/Noche', horas: '16:00–00:00', dotColor: '#0F9D8F' },
+  C: { label: 'Turno C', horas: '16:00–00:00', dotColor: '#0F9D8F' },
   N: { label: 'Noche', horas: '22:00–07:00', dotColor: '#6B5FB0' },
   SE: { label: 'Supervisor', horas: 'Variable', dotColor: '#D97706' },
 };
