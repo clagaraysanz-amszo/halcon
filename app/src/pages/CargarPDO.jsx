@@ -106,10 +106,35 @@ function fechaDesdeNombre(name) {
 }
 
 /**
+ * Ubica los rangos [start, end) del texto que caen bajo un encabezado
+ * "PERSONAL DRON TURNO C ..." (ver hoja "TURNO B-C" del PDO: mezcla personal
+ * de turno B normal con un operador de turno C extendido que comparte móvil
+ * con B y luego con N). Todo sobrevuelo cuyo bloque "SOBREVUELOS…" cae dentro
+ * de uno de estos rangos es turno C sin importar la hora de cada sector.
+ */
+function rangosTurnoC(text) {
+  const marcador = /PERSONAL\s*DRON\s*TURNO\s*C\b/gi;
+  const finSeccion = /\n\s*(CAMION DE EMERGENCIA|PERSONAL DRON(?!\s*TURNO\s*C)|GLOBOS Y CCS|AUTOPISTA SEGURA|SIE\b|CASAS RECOMENDADAS|SERV\. EXTRAORDINARIOS)/i;
+  const rangos = [];
+  let m;
+  while ((m = marcador.exec(text)) !== null) {
+    const desde = m.index;
+    const resto = text.slice(desde + m[0].length);
+    const finMatch = resto.match(finSeccion);
+    const hasta = finMatch ? desde + m[0].length + finMatch.index : text.length;
+    rangos.push([desde, hasta]);
+  }
+  return rangos;
+}
+
+/**
  * Interpreta el PDO COMPLETO pegado como texto. Por cada bloque "SOBREVUELOS…"
  * busca hacia atrás el nombre del operador de dron y lo empareja con la tabla
  * `operadores` por coincidencia de tokens (nombre y apellido, sin importar el
- * orden ni los acentos). El turno se deduce de la hora de cada sobrevuelo.
+ * orden ni los acentos). El turno se deduce de la hora de cada sobrevuelo,
+ * salvo que el bloque caiga bajo "PERSONAL DRON TURNO C" (ver rangosTurnoC),
+ * en cuyo caso todo el bloque es turno C sin importar la hora de cada sector
+ * (evita partir a un mismo operador entre turno B y N).
  * Devuelve { asignaciones: [{halcon_n, nombre, rows:[{tramo_n,hora,turno}]}], noReconocidos }.
  */
 function interpretarPDO(text, operadores) {
@@ -120,6 +145,7 @@ function interpretarPDO(text, operadores) {
   const pos = [];
   let m;
   while ((m = re.exec(text)) !== null) pos.push(m.index);
+  const turnoCRangos = rangosTurnoC(text);
 
   const asignaciones = [];
   const noReconocidos = [];
@@ -144,10 +170,11 @@ function interpretarPDO(text, operadores) {
       noReconocidos.push(text.slice(Math.max(0, start - 45), start).replace(/\s+/g, ' ').trim());
       continue;
     }
+    const esTurnoC = turnoCRangos.some(([desde, hasta]) => start >= desde && start < hasta);
     asignaciones.push({
       halcon_n: best.halcon_n,
       nombre: best.nombre,
-      rows: items.map((it) => ({ ...it, turno: turnoDeHora(it.hora) })),
+      rows: items.map((it) => ({ ...it, turno: esTurnoC ? 'C' : turnoDeHora(it.hora) })),
     });
   }
   return { asignaciones, noReconocidos };
